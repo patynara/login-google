@@ -12,20 +12,16 @@
     <link href="styles/estiloLg.css" rel="stylesheet">
     <style>
         /* Oculta o conteúdo até a verificação ser concluída */
-        body {
-            visibility: hidden;
+        .login-container {
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
-        .auth-ready body {
-            visibility: visible;
+        .auth-ready .login-container {
+            opacity: 1;
         }
     </style>
 </head>
 <body>
-    <script>
-        // Mostra o conteúdo apenas após a verificação
-        document.documentElement.classList.add('auth-ready');
-    </script>
-
     <div class="login-container">
         <h2>Bem-vindo(a)</h2>
         <p>Faça login para continuar</p>
@@ -51,5 +47,15 @@
              data-logo_alignment="left">
         </div>
     </div>
+
+    <!-- Scripts -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="scripts/controleLg.js"></script>
+    <script>
+        // Mostra o conteúdo após um pequeno delay para garantir que o botão do Google foi carregado
+        setTimeout(() => {
+            document.documentElement.classList.add('auth-ready');
+        }, 100);
+    </script>
 </body>
 </html>
