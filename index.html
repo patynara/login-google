@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Relatórios GEDUC.</title>
+    <title>Login com Google</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -69,60 +69,89 @@
 
         <div id="g_id_onload"
              data-client_id="871243412111-upmsuhdvvanuqp4to9vhl2ar962qd01c.apps.googleusercontent.com"
-             data-callback="handleCredentialResponse">
+             data-context="signin"
+             data-ux_mode="popup"
+             data-callback="handleCredentialResponse"
+             data-auto_prompt="false">
         </div>
-        <div class="g_id_signin" 
+
+        <div class="g_id_signin"
              data-type="standard"
-             data-size="large"
-             data-theme="outline"
-             data-text="sign_in_with"
              data-shape="rectangular"
+             data-theme="outline"
+             data-text="signin_with"
+             data-size="large"
              data-logo_alignment="left">
         </div>
     </div>
 
+    <!-- Carrega a API do Google Identity -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     
-<script>
-    async function verificarAutorizacao(token) {
-        try {
-            const response = await fetch(`${https://script.google.com/macros/s/AKfycbxdO6_2M_W0mYqDz5kpSeS29WmI_h6DkzUVi0z2LX07F6UsNJAWnZqgvZ_p4HjRI2bG/exec}?token=${encodeURIComponent(token)}`);
-            const data = await response.json();
-            return data;
-        } catch (error) {
-            console.error('Erro ao verificar autorização:', error);
-            throw error;
-        }
-    }
+    <script>
+        // URL do seu Web App do Google Apps Script após o deploy
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxdO6_2M_W0mYqDz5kpSeS29WmI_h6DkzUVi0z2LX07F6UsNJAWnZqgvZ_p4HjRI2bG/exec';
 
-    async function handleCredentialResponse(response) {
-        showLoader(true);
-        try {
+        function showMessage(message, isError = false) {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = message;
+            messageBox.style.display = 'block';
+            messageBox.className = 'message ' + (isError ? 'error' : 'success');
+        }
+
+        function showLoader(show = true) {
+            document.getElementById('loader').style.display = show ? 'block' : 'none';
+        }
+
+        async function verificarAutorizacao(token) {
+            try {
+                const response = await fetch(`${APPS_SCRIPT_URL}?token=${encodeURIComponent(token)}`);
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Erro ao verificar autorização:', error);
+                throw error;
+            }
+        }
+
+        function handleCredentialResponse(response) {
+            showLoader(true);
+            
+            if (!response || !response.credential) {
+                showMessage('Erro no login com Google', true);
+                showLoader(false);
+                return;
+            }
+
             const idToken = response.credential;
             
-            // Agora enviamos o token para validação, não o email
-            const authResult = await verificarAutorizacao(idToken);
-            
-            if (authResult.autorizado) {
-                showMessage('Login realizado com sucesso! Redirecionando...', false);
-                // Usar o email verificado retornado pelo backend
-                sessionStorage.setItem('userEmail', authResult.email);
-                sessionStorage.setItem('userToken', idToken);
-                
-                // Decodificar token apenas para pegar o nome
-                const payload = JSON.parse(atob(idToken.split('.')[1]));
-                sessionStorage.setItem('userName', payload.name);
-                
-                // window.location.href = 'sua-pagina-principal.html';
-            } else {
-                showMessage('Email não autorizado para acessar o sistema.', true);
-            }
-        } catch (error) {
-            showMessage('Erro ao verificar autorização: ' + error.message, true);
-        } finally {
-            showLoader(false);
+            verificarAutorizacao(idToken)
+                .then(authResult => {
+                    if (authResult.autorizado) {
+                        showMessage('Login realizado com sucesso! Redirecionando...', false);
+                        // Usar o email verificado retornado pelo backend
+                        sessionStorage.setItem('userEmail', authResult.email);
+                        sessionStorage.setItem('userToken', idToken);
+                        
+                        // Decodificar token apenas para pegar o nome
+                        const payload = JSON.parse(atob(idToken.split('.')[1]));
+                        sessionStorage.setItem('userName', payload.name);
+                        
+                        // Redirecionar após 1 segundo para dar tempo de ver a mensagem
+                        setTimeout(() => {
+                            window.location.href = 'sua-pagina-principal.html';
+                        }, 1000);
+                    } else {
+                        showMessage('Email não autorizado para acessar o sistema.', true);
+                    }
+                })
+                .catch(error => {
+                    showMessage('Erro ao verificar autorização: ' + error.message, true);
+                })
+                .finally(() => {
+                    showLoader(false);
+                });
         }
-    }
-</script>
+    </script>
 </body>
 </html>
