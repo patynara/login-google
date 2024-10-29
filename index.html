@@ -87,7 +87,7 @@
 <script>
     async function verificarAutorizacao(token) {
         try {
-            const response = await fetch(`${APPS_SCRIPT_URL}?token=${encodeURIComponent(token)}`);
+            const response = await fetch(`${https://script.google.com/macros/s/AKfycbxdO6_2M_W0mYqDz5kpSeS29WmI_h6DkzUVi0z2LX07F6UsNJAWnZqgvZ_p4HjRI2bG/exec}?token=${encodeURIComponent(token)}`);
             const data = await response.json();
             return data;
         } catch (error) {
