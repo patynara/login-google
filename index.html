@@ -5,16 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Sistema</title>
     
+    <!-- Verificação de redirecionamento se já estiver logado -->
+    <script src="scripts/indexCheck.js"></script>
+    
     <!-- Estilos -->
     <link href="styles/estiloLg.css" rel="stylesheet">
-
-    <!-- Scripts do Google -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    
-    <!-- Scripts da aplicação -->
-    <script src="scripts/controleLg.js"></script>
+    <style>
+        /* Oculta o conteúdo até a verificação ser concluída */
+        body {
+            visibility: hidden;
+        }
+        .auth-ready body {
+            visibility: visible;
+        }
+    </style>
 </head>
 <body>
+    <script>
+        // Mostra o conteúdo apenas após a verificação
+        document.documentElement.classList.add('auth-ready');
+    </script>
+
     <div class="login-container">
         <h2>Bem-vindo(a)</h2>
         <p>Faça login para continuar</p>

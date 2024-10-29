@@ -4,12 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
+    <!-- Verificação de sessão deve ser o primeiro script -->
+    <script src="scripts/sessionCheck.js"></script>
+    <style>
+        /* Estilo para ocultar o conteúdo inicialmente */
+        body {
+            visibility: hidden;
+        }
+        .authenticated body {
+            visibility: visible;
+        }
+    </style>
     <link href="styles/dashboardStyles.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
-    <script src="scripts/sessionCheck.js"></script>
     <script src="scripts/dashboardControl.js"></script>
 </head>
 <body>
+    <script>
+        // Verificação adicional de segurança
+        if (!sessionStorage.getItem('userEmail')) {
+            window.location.replace('index.html');
+        } else {
+            document.documentElement.classList.add('authenticated');
+        }
+    </script>
+
     <div class="dashboard-container">
         <header class="top-bar">
             <div class="user-info">
