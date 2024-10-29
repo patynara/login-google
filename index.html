@@ -42,21 +42,6 @@
             border: 1px solid #f5c6cb;
         }
 
-        .google-btn {
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 10px 20px;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        
-        .google-btn:hover {
-            background-color: #f5f5f5;
-        }
-        
         .loader {
             display: none;
             border: 3px solid #f3f3f3;
@@ -82,7 +67,6 @@
         <div id="messageBox" class="message"></div>
         <div id="loader" class="loader"></div>
 
-        <!-- Botão de login do Google -->
         <div id="g_id_onload"
              data-client_id="SEU_CLIENT_ID_AQUI"
              data-callback="handleCredentialResponse">
@@ -97,10 +81,12 @@
         </div>
     </div>
 
-    <!-- Carrega a API do Google Identity -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     
     <script>
+        // URL do seu Web App do Google Apps Script após o deploy
+        const APPS_SCRIPT_URL = 'URL_DO_SEU_WEBAPP_AQUI';
+
         function showMessage(message, isError = false) {
             const messageBox = document.getElementById('messageBox');
             messageBox.textContent = message;
@@ -112,32 +98,43 @@
             document.getElementById('loader').style.display = show ? 'block' : 'none';
         }
 
-        function handleCredentialResponse(response) {
-            showLoader(true);
-            const idToken = response.credential;
-            
-            // Decodifica o token para obter o email
-            const payload = JSON.parse(atob(idToken.split('.')[1]));
-            const email = payload.email;
+        async function verificarAutorizacao(email) {
+            try {
+                const response = await fetch(`${APPS_SCRIPT_URL}?email=${encodeURIComponent(email)}`);
+                const data = await response.json();
+                return data.autorizado;
+            } catch (error) {
+                console.error('Erro ao verificar autorização:', error);
+                throw error;
+            }
+        }
 
-            // Chama a função do Apps Script para verificar o email
-            google.script.run
-                .withSuccessHandler(function(isAuthorized) {
-                    showLoader(false);
-                    if (isAuthorized) {
-                        showMessage('Login realizado com sucesso! Redirecionando...', false);
-                        // Aqui você pode redirecionar para a página principal do seu sistema
-                        // window.location.href = 'sua-pagina-principal.html';
-                        sessionStorage.setItem('userEmail', email);
-                    } else {
-                        showMessage('Email não autorizado para acessar o sistema.', true);
-                    }
-                })
-                .withFailureHandler(function(error) {
-                    showLoader(false);
-                    showMessage('Erro ao verificar autorização: ' + error.message, true);
-                })
-                .verificarEmail(email);
+        async function handleCredentialResponse(response) {
+            showLoader(true);
+            try {
+                const idToken = response.credential;
+                const payload = JSON.parse(atob(idToken.split('.')[1]));
+                const email = payload.email;
+
+                const autorizado = await verificarAutorizacao(email);
+                
+                if (autorizado) {
+                    showMessage('Login realizado com sucesso! Redirecionando...', false);
+                    // Salvar informações do usuário
+                    sessionStorage.setItem('userEmail', email);
+                    sessionStorage.setItem('userName', payload.name);
+                    sessionStorage.setItem('userToken', idToken);
+                    
+                    // Redirecionar para a página principal
+                    // window.location.href = 'sua-pagina-principal.html';
+                } else {
+                    showMessage('Email não autorizado para acessar o sistema.', true);
+                }
+            } catch (error) {
+                showMessage('Erro ao verificar autorização: ' + error.message, true);
+            } finally {
+                showLoader(false);
+            }
         }
     </script>
 </body>
