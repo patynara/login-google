@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link href="styles/dashboardStyles.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script src="scripts/sessionCheck.js"></script>
+    <script src="scripts/dashboardControl.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="top-bar">
+            <div class="user-info">
+                <span id="welcomeMessage">Bem-vindo(a), </span>
+                <span id="userName"></span>
+            </div>
+            <button id="logoutBtn" class="logout-btn">Sair</button>
+        </header>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3>Estatísticas Gerais</h3>
+                <canvas id="generalStats"></canvas>
+            </div>
+
+            <div class="card">
+                <h3>Dados Mensais</h3>
+                <canvas id="monthlyData"></canvas>
+            </div>
+
+            <div class="card wide">
+                <h3>Tabela de Registros</h3>
+                <div class="table-container">
+                    <table id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Descrição</th>
+                                <th>Status</th>
+                                <th>Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- Dados serão inseridos via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Distribuição</h3>
+                <canvas id="distributionChart"></canvas>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
