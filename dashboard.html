@@ -3,66 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>G-EDUC - Dashboard</title>
-    
-    <!-- Estilos -->
-    <link rel="stylesheet" href="styles/style.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
-    
-    <!-- Scripts necessários para o DataTables -->
-    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+    <title>Dashboard</title>
+    <!-- Verificação de sessão deve ser o primeiro script -->
+    <script src="scripts/sessionCheck.js"></script>
+    <style>
+        /* Estilo para ocultar o conteúdo inicialmente */
+        body {
+            visibility: hidden;
+        }
+        .authenticated body {
+            visibility: visible;
+        }
+    </style>
+    <link href="styles/dashboardStyles.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script src="scripts/dashboardControl.js"></script>
 </head>
 <body>
-    <div id="sidebar" class="sidebar">
-        <div class="sidebar-header">
-            <span class="header-title">G-EDUC</span>
-        </div>
-        <ul class="sidebar-menu">
-            <li class="active"><a href="dashboard.html">Dashboard</a></li>
-            <li><a href="#" id="logoutBtn">Sair</a></li>
-        </ul>
-    </div>
+    <script>
+        // Verificação adicional de segurança
+        if (!sessionStorage.getItem('userEmail')) {
+            window.location.replace('index.html');
+        } else {
+            document.documentElement.classList.add('authenticated');
+        }
+    </script>
 
-    <div id="mainContent" class="main-content">
-        <div class="top-bar">
+    <div class="dashboard-container">
+        <header class="top-bar">
             <div class="user-info">
-                Bem-vindo(a), <span id="userName"></span>
+                <span id="welcomeMessage">Bem-vindo(a), </span>
+                <span id="userName"></span>
             </div>
-        </div>
+            <button id="logoutBtn" class="logout-btn">Sair</button>
+        </header>
 
-        <div class="dashboard-container">
-            <h2>Dashboard Geral</h2>
-            
-            <div class="stats-container">
-                <div class="stat-item">
-                    <span id="totalAlunos" class="stat-value">0</span>
-                    <span class="stat-label">Total de Alunos</span>
-                </div>
-                <div class="stat-item">
-                    <span id="totalTransporte" class="stat-value">0</span>
-                    <span class="stat-label">Usam Transporte</span>
-                </div>
-                <div class="stat-item">
-                    <span id="totalBolsa" class="stat-value">0</span>
-                    <span class="stat-label">Bolsa Família</span>
-                </div>
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3>Estatísticas Gerais</h3>
+                <canvas id="generalStats"></canvas>
             </div>
 
-            <div id="dataTableContainer"></div>
+            <div class="card">
+                <h3>Dados Mensais</h3>
+                <canvas id="monthlyData"></canvas>
+            </div>
+
+            <div class="card wide">
+                <h3>Tabela de Registros</h3>
+                <div class="table-container">
+                    <table id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Descrição</th>
+                                <th>Status</th>
+                                <th>Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- Dados serão inseridos via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Distribuição</h3>
+                <canvas id="distributionChart"></canvas>
+            </div>
         </div>
     </div>
-
-    <div id="loader" class="loader"></div>
-
-    <!-- Script principal do dashboard -->
-    <script type="module" src="scripts/dashboardControl.js"></script>
 </body>
 </html>
