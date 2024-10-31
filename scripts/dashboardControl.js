@@ -178,5 +178,3 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('resize', checkScreenSize);
     checkScreenSize();
 });
-
-// Resto do código do dashboard...
