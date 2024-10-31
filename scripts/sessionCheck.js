@@ -1,4 +1,6 @@
 // sessionCheck.js
+let initialized = false;
+
 export function checkAuth() {
     const userEmail = sessionStorage.getItem('userEmail');
     const userToken = sessionStorage.getItem('userToken');
@@ -12,49 +14,32 @@ export function checkAuth() {
 }
 
 export function initSidebar() {
+    if (initialized) return;
+    initialized = true;
+
     const userNameElement = document.getElementById('userName');
     if (userNameElement) {
-        const userName = sessionStorage.getItem('userName');
-        if (userName) {
-            try {
-                const decodedName = decodeURIComponent(escape(userName));
-                userNameElement.textContent = decodedName;
-            } catch (e) {
-                userNameElement.textContent = userName;
-            }
-        }
+        userNameElement.textContent = sessionStorage.getItem('userName') || '';
     }
 
-    // Marcar item atual do menu
-    const currentPage = window.location.pathname.split('/').pop() || 'dashboard.html';
-    document.querySelectorAll('.sidebar-menu li').forEach(item => {
-        const link = item.querySelector('a');
-        if (link && link.getAttribute('href') === currentPage) {
-            item.classList.add('active');
-        } else {
-            item.classList.remove('active');
-        }
-    });
-
-    // Configurar responsividade
-    const sidebar = document.getElementById('sidebar');
-    const mainContent = document.getElementById('mainContent');
-
-    function checkScreenSize() {
-        if (window.innerWidth <= 768) {
-            if (sidebar) sidebar.classList.add('collapsed');
-            if (mainContent) mainContent.classList.add('expanded');
-        }
-    }
-
-    window.addEventListener('resize', checkScreenSize);
-    checkScreenSize();
-
-    // Configurar logout
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', logout);
     }
+
+    // Responsividade
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    
+    function adjustLayout() {
+        if (window.innerWidth <= 768) {
+            sidebar?.classList.add('collapsed');
+            mainContent?.classList.add('expanded');
+        }
+    }
+
+    window.addEventListener('resize', adjustLayout);
+    adjustLayout();
 }
 
 export function checkIndexAuth() {
@@ -71,11 +56,6 @@ export function checkIndexAuth() {
 export async function logout(e) {
     if (e) e.preventDefault();
     sessionStorage.clear();
-    
-    if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-        google.accounts.id.disableAutoSelect();
-    }
-    
     window.location.replace('index.html');
 }
 
@@ -85,8 +65,9 @@ export function showMessage(message, isError = false) {
         messageBox.textContent = message;
         messageBox.style.display = 'block';
         messageBox.className = 'message ' + (isError ? 'error' : 'success');
-    } else {
-        console.log(message);
+        setTimeout(() => {
+            messageBox.style.display = 'none';
+        }, 3000);
     }
 }
 
@@ -95,14 +76,4 @@ export function showLoader(show = true) {
     if (loader) {
         loader.style.display = show ? 'block' : 'none';
     }
-}
-
-// Inicialização única
-const isLoginPage = window.location.pathname.includes('index.html');
-if (!isLoginPage && !checkAuth()) {
-    window.location.replace('index.html');
-} else if (isLoginPage) {
-    checkIndexAuth();
-} else {
-    initSidebar();
 }
