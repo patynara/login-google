@@ -15,28 +15,84 @@ if (!userToken || !userName) {
         window.location.replace('index.html');
     };
 
+    // Função para processar os dados da tabela
+    function processTableData(filteredData) {
+        // Agrupar dados por instituição, curso, turma e turno
+        return filteredData.reduce((acc, curr) => {
+            const key = `${curr.instituicao}-${curr.curso}-${curr.turma}-${curr.turno}`;
+            if (!acc[key]) {
+                acc[key] = {
+                    instituicao: curr.instituicao,
+                    curso: curr.curso,
+                    turma: curr.turma,
+                    turno: curr.turno,
+                    totalAlunos: 0
+                };
+            }
+            acc[key].totalAlunos++;
+            return acc;
+        }, {});
+    }
+
+    // Inicializar DataTable
+    function initializeDataTable(tableData) {
+        return new DataTable('#mainTable', {
+            data: Object.values(tableData),
+            columns: [
+                { data: 'instituicao' },
+                { data: 'curso' },
+                { data: 'turma' },
+                { data: 'turno' },
+                { 
+                    data: 'totalAlunos',
+                    render: function(data) {
+                        return data.toLocaleString('pt-BR');
+                    }
+                }
+            ],
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
+            },
+            dom: 'Bfrtip',
+            buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
+            order: [[0, 'asc']],
+            pageLength: 25,
+            responsive: true
+        });
+    }
+
     // Carregar dados uma única vez
     (async function() {
+        const loader = document.getElementById('loader');
         try {
-            // Mostrar loader
-            document.getElementById('loader').style.display = 'block';
+            loader.style.display = 'block';
             
-            // Buscar dados
-            const response = await fetch(`${APPS_SCRIPT_URL}?action=dashboard&token=${userToken}`);
+            const response = await fetch(`${APPS_SCRIPT_URL}?action=dashboard&token=${encodeURIComponent(userToken)}`);
+            if (!response.ok) throw new Error('Erro na resposta do servidor');
+            
             const result = await response.json();
-
             if (!result.autorizado) throw new Error('Não autorizado');
 
-            const data = result.data;
+            const { data } = result;
+            if (!data || !data.analytics || !data.filteredData) {
+                throw new Error('Dados inválidos recebidos do servidor');
+            }
 
             // Atualizar estatísticas
-            document.getElementById('totalAlunos').textContent = data.analytics.totalAlunos || 0;
+            const analytics = data.analytics;
+            document.getElementById('totalAlunos').textContent = 
+                (analytics.totalAlunos || 0).toLocaleString('pt-BR');
+            
+            const totalTransporte = Object.values(analytics.transporteEscola || {})
+                .reduce((a, b) => a + b, 0);
             document.getElementById('totalTransporte').textContent = 
-                Object.values(data.analytics.transporteEscola || {}).reduce((a, b) => a + b, 0);
+                totalTransporte.toLocaleString('pt-BR');
+            
+            const totalBolsa = Object.keys(analytics.alunosBolsaFamilia || {}).length;
             document.getElementById('totalBolsa').textContent = 
-                Object.keys(data.analytics.alunosBolsaFamilia || {}).length;
+                totalBolsa.toLocaleString('pt-BR');
 
-            // Criar estrutura da tabela
+            // Preparar tabela
             document.getElementById('dataTableContainer').innerHTML = `
                 <table id="mainTable" class="display">
                     <thead>
@@ -51,40 +107,11 @@ if (!userToken || !userName) {
                 </table>
             `;
 
-            // Preparar dados agrupados
-            const groupedData = data.filteredData.reduce((acc, curr) => {
-                const key = `${curr.instituicao}-${curr.curso}-${curr.turma}-${curr.turno}`;
-                if (!acc[key]) {
-                    acc[key] = {
-                        instituicao: curr.instituicao,
-                        curso: curr.curso,
-                        turma: curr.turma,
-                        turno: curr.turno,
-                        totalAlunos: 0
-                    };
-                }
-                acc[key].totalAlunos++;
-                return acc;
-            }, {});
+            // Processar e exibir dados
+            const processedData = processTableData(data.filteredData);
+            const dataTable = initializeDataTable(processedData);
 
-            // Inicializar DataTable
-            const dataTable = new DataTable('#mainTable', {
-                data: Object.values(groupedData),
-                columns: [
-                    { data: 'instituicao' },
-                    { data: 'curso' },
-                    { data: 'turma' },
-                    { data: 'turno' },
-                    { data: 'totalAlunos' }
-                ],
-                language: {
-                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
-                },
-                dom: 'Bfrtip',
-                buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
-            });
-
-            // Adicionar evento de clique
+            // Adicionar evento de clique nas linhas
             document.querySelector('#mainTable tbody').addEventListener('click', (e) => {
                 const row = e.target.closest('tr');
                 if (row) {
@@ -96,10 +123,10 @@ if (!userToken || !userName) {
             });
 
         } catch (error) {
-            console.error('Erro:', error);
-            alert('Erro ao carregar dados');
+            console.error('Erro ao carregar dados:', error);
+            alert(`Erro ao carregar dados: ${error.message}`);
         } finally {
-            document.getElementById('loader').style.display = 'none';
+            loader.style.display = 'none';
         }
     })();
 }
