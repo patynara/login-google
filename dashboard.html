@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
+    <title>DashboardA</title>
     <!-- Verificação de sessão deve ser o primeiro script -->
     <script src="scripts/sessionCheck.js"></script>
     <style>
@@ -40,7 +40,7 @@
     </div>
 
     <div class="dashboard-grid">
-        <div class="card">
+        <div class="card stats-card">
             <h3>Estatísticas Gerais</h3>
             <div class="stats-container">
                 <div class="stat-item">
@@ -58,14 +58,18 @@
             </div>
         </div>
 
-        <div class="card">
+        <div class="card chart-card">
             <h3>Distribuição por Gênero</h3>
-            <canvas id="generoChart"></canvas>
+            <div class="chart-container">
+                <canvas id="generoChart"></canvas>
+            </div>
         </div>
 
-        <div class="card">
+        <div class="card chart-card">
             <h3>Distribuição por Raça/Cor</h3>
-            <canvas id="racaChart"></canvas>
+            <div class="chart-container">
+                <canvas id="racaChart"></canvas>
+            </div>
         </div>
 
         <div class="card wide">
