@@ -1,6 +1,5 @@
 import { APPS_SCRIPT_URL } from './config.js';
 
-
 let globalData = null;
 let dataTable = null;
 
@@ -54,6 +53,7 @@ function initializeDataTable(data) {
             url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
         },
         initComplete: function() {
+            // Adiciona evento de clique nas linhas
             $('#mainTable tbody').on('click', 'tr', function() {
                 const data = dataTable.row(this).data();
                 showCharts(data.instituicao);
@@ -75,8 +75,9 @@ function showCharts(instituicao) {
     chartsContainer.style.display = 'grid';
     
     // Limpa gráficos existentes
-    const chartCanvases = chartsContainer.querySelectorAll('canvas');
-    chartCanvases.forEach(canvas => {
+    const chartIds = ['escolaChart', 'turmaChart', 'cursoIdadeChart', 'deficienciaChart'];
+    chartIds.forEach(id => {
+        const canvas = document.getElementById(id);
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     });
@@ -84,11 +85,16 @@ function showCharts(instituicao) {
     // Filtra dados para a instituição selecionada
     const filteredAnalytics = filterDataByInstituicao(globalData.analytics, instituicao);
     
-    // Atualiza todos os gráficos
-    updateAllCharts(instituicao);
+    // Cria novos gráficos
+    createEscolaChart(filteredAnalytics);
+    createTurmaChart(filteredAnalytics);
+    createCursoIdadeChart(filteredAnalytics);
+    createDeficienciaChart(filteredAnalytics);
+    // Adicione mais chamadas para outros gráficos
 }
 
 function filterDataByInstituicao(analytics, instituicao) {
+    // Filtra os dados para a instituição selecionada
     const filtered = {};
     Object.keys(analytics).forEach(key => {
         if (typeof analytics[key] === 'object') {
@@ -102,61 +108,32 @@ function filterDataByInstituicao(analytics, instituicao) {
     return filtered;
 }
 
-function getChartColor(index) {
-    const colors = [
-        '#4a90e2', '#50c878', '#ff6b6b', '#ffd700', 
-        '#8884d8', '#82ca9d', '#ff7c43', '#a05195'
-    ];
-    return colors[index % colors.length];
-}
-
-function updateAllCharts(instituicao) {
-    const filteredAnalytics = filterDataByInstituicao(globalData.analytics, instituicao);
-    
-    // Cria ou atualiza cada gráfico
-    createEscolaChart(filteredAnalytics);
-    createTurmaChart(filteredAnalytics);
-    createCursoIdadeChart(filteredAnalytics);
-    createDeficienciaChart(filteredAnalytics);
-    createAlunosCursoDeficienciaChart(filteredAnalytics);
-    createAlunosCursoCorChart(filteredAnalytics, instituicao);
-    createAlunosTransporteZonaChart(filteredAnalytics);
-    createAlunosBolsaFamiliaChart(filteredAnalytics, instituicao);
-    createAlunosSituacaoChart(filteredAnalytics, instituicao);
-    createAlunosTurnoChart(filteredAnalytics);
-    createAlunosTempoIntegralChart(filteredAnalytics);
-    createAlunosIdadeTransporteChart(filteredAnalytics);
-}
-
-function createChart(canvasId, type, data, options = {}) {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    return new Chart(ctx, {
-        type: type,
-        data: data,
+function createEscolaChart(analytics) {
+    const ctx = document.getElementById('escolaChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(analytics.alunosPorEscola),
+            datasets: [{
+                label: 'Alunos por Escola',
+                data: Object.values(analytics.alunosPorEscola),
+                backgroundColor: '#4a90e2'
+            }]
+        },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            ...options
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
         }
     });
 }
 
-// Funções específicas para cada gráfico
-function createEscolaChart(analytics) {
-    createChart('escolaChart', 'bar', {
-        labels: Object.keys(analytics.alunosPorEscola),
-        datasets: [{
-            label: 'Alunos por Escola',
-            data: Object.values(analytics.alunosPorEscola),
-            backgroundColor: '#4a90e2'
-        }]
-    });
-}
-
 function createTurmaChart(analytics) {
+    const ctx = document.getElementById('turmaChart').getContext('2d');
     const turmaData = Object.entries(analytics.alunosPorTurma)
         .reduce((acc, [key, value]) => {
             const [curso, turma] = key.split('-');
@@ -165,17 +142,30 @@ function createTurmaChart(analytics) {
             return acc;
         }, {});
 
-    createChart('turmaChart', 'bar', {
-        labels: Object.keys(turmaData),
-        datasets: Object.keys(turmaData[Object.keys(turmaData)[0]] || {}).map((turma, index) => ({
-            label: turma,
-            data: Object.values(turmaData).map(curso => curso[turma] || 0),
-            backgroundColor: getChartColor(index)
-        }))
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(turmaData),
+            datasets: Object.keys(turmaData[Object.keys(turmaData)[0]] || {}).map((turma, index) => ({
+                label: turma,
+                data: Object.values(turmaData).map(curso => curso[turma] || 0),
+                backgroundColor: getChartColor(index)
+            }))
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
     });
 }
 
 function createCursoIdadeChart(analytics) {
+    const ctx = document.getElementById('cursoIdadeChart').getContext('2d');
     const cursoIdadeData = Object.entries(analytics.alunosPorCursoIdade)
         .reduce((acc, [key, value]) => {
             const [curso, idade] = key.split('-');
@@ -184,14 +174,55 @@ function createCursoIdadeChart(analytics) {
             return acc;
         }, {});
 
-    createChart('cursoIdadeChart', 'bar', {
-        labels: Object.keys(cursoIdadeData),
-        datasets: Object.keys(cursoIdadeData[Object.keys(cursoIdadeData)[0]] || {}).map((idade, index) => ({
-            label: `${idade} anos`,
-            data: Object.values(cursoIdadeData).map(curso => curso[idade] || 0),
-            backgroundColor: getChartColor(index)
-        }))
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(cursoIdadeData),
+            datasets: Object.keys(cursoIdadeData[Object.keys(cursoIdadeData)[0]] || {}).map((idade, index) => ({
+                label: `${idade} anos`,
+                data: Object.values(cursoIdadeData).map(curso => curso[idade] || 0),
+                backgroundColor: getChartColor(index)
+            }))
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
     });
+}
+
+function createDeficienciaChart(analytics) {
+    const ctx = document.getElementById('deficienciaChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['Com Deficiência', 'Sem Deficiência'],
+            datasets: [{
+                data: [
+                    Object.values(analytics.alunosDeficienciaPorEscola).reduce((a, b) => a + b, 0),
+                    analytics.totalAlunos - Object.values(analytics.alunosDeficienciaPorEscola).reduce((a, b) => a + b, 0)
+                ],
+                backgroundColor: ['#ff6b6b', '#4a90e2']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+function getChartColor(index) {
+    const colors = [
+        '#4a90e2', '#50c878', '#ff6b6b', '#ffd700', 
+        '#8884d8', '#82ca9d', '#ff7c43', '#a05195'
+    ];
+    return colors[index % colors.length];
 }
 
 function showLoader(show = true) {
@@ -213,18 +244,4 @@ document.addEventListener('DOMContentLoaded', async function() {
     initSidebar();
 
     try {
-        const data = await fetchDashboardData();
-        if (data) {
-            globalData = data;
-            initializeDataTable(data);
-            updateEstatisticasGerais(data.analytics);
-            
-            // Inicialmente oculta a área de gráficos
-            const chartsContainer = document.getElementById('chartsContainer');
-            chartsContainer.style.display = 'none';
-        }
-    } catch (error) {
-        console.error('Erro ao inicializar dashboard:', error);
-        showMessage('Erro ao carregar dados do dashboard', true);
-    }
-});
+        const data = await fetchDashboar

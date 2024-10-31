@@ -1,54 +1,43 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - G-EDUC</title>
-    
-    <!-- Estilos -->
+    <title>G-EDUC - Dashboard B</title>
     <link rel="stylesheet" href="styles/style.css">
-    <link rel="stylesheet" href="styles/dashboardStyles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Scripts -->
     <script type="module" src="scripts/dashboardControl.js"></script>
-    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="scripts/sessionCheck.js"></script>
+    <script src="scripts/dashboardControl.js"></script>
 </head>
 <body>
-    <!-- Sidebar -->
-    <div id="sidebar" class="sidebar">
+    <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <span class="header-title">G-EDUC</span>
             <button id="toggleSidebar" class="toggle-btn">
                 <i class="fas fa-bars"></i>
             </button>
         </div>
+
         <ul class="sidebar-menu">
-            <li class="active"><a href="dashboard.html"><i class="fas fa-chart-bar"></i><span>Dashboard</span></a></li>
-            <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>Sair</span></a></li>
+            <li class="active"><a href="dashboard.html"><i class="fas fa-chart-line"></i> <span>Dashboard</span></a></li>
+            <!-- Outros itens do menu -->
+            <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> <span>Sair</span></a></li>
         </ul>
     </div>
 
-    <!-- Main Content -->
     <div id="mainContent" class="main-content">
         <div class="top-bar">
-            <div class="user-info">Bem-vindo(a), <span id="userName"></span></div>
+            <div class="user-info">
+                Bem-vindo(a), <span id="userName"></span>
+            </div>
         </div>
 
         <div class="dashboard-container">
             <h2>Dashboard Geral</h2>
-            
-            <!-- Cards com estatísticas gerais -->
+        
+            <!-- Adicionar os totalizadores gerais -->
             <div class="stats-container">
                 <div class="stat-item">
                     <span id="totalAlunos" class="stat-value">0</span>
@@ -63,53 +52,22 @@
                     <span class="stat-label">Bolsa Família</span>
                 </div>
             </div>
-
-            <!-- DataTable -->
-            <div class="card wide">
-                <h3>Dados Gerais</h3>
-                <div class="table-container">
-                    <table id="mainTable" class="display" style="width:100%">
-                        <!-- Table content will be dynamically populated -->
-                    </table>
-                </div>
+        
+            <div class="criteria-selector">
+                <label for="criteriaSelect">Selecionar Critério:</label>
+                <select id="criteriaSelect">
+                    <option value="porInstituicao">Instituição</option>
+                    <option value="porIdade">Idade (Faixa)</option>
+                    <option value="porPai">Pai (SIM/NÃO)</option>
+                    <option value="porNaturalidade">Naturalidade</option>
+                    <option value="porSexo">Sexo</option>
+                    <!-- Adicione outros critérios conforme necessário -->
+                </select>
             </div>
-
-            <!-- Container para gráficos -->
-            <div id="chartsContainer" class="dashboard-grid" style="display: none;">
-                <div class="card chart-card">
-                    <h3>Distribuição por Escola</h3>
-                    <div class="chart-container">
-                        <canvas id="escolaChart"></canvas>
-                    </div>
-                </div>
-                <div class="card chart-card">
-                    <h3>Distribuição por Turma</h3>
-                    <div class="chart-container">
-                        <canvas id="turmaChart"></canvas>
-                    </div>
-                </div>
-                <div class="card chart-card">
-                    <h3>Distribuição por Curso e Idade</h3>
-                    <div class="chart-container">
-                        <canvas id="cursoIdadeChart"></canvas>
-                    </div>
-                </div>
-                <div class="card chart-card">
-                    <h3>Alunos com Deficiência</h3>
-                    <div class="chart-container">
-                        <canvas id="deficienciaChart"></canvas>
-                    </div>
-                </div>
-                <!-- Adicione mais containers para outros gráficos -->
-            </div>
+            <div id="dataTableContainer"></div>
         </div>
     </div>
 
-    <!-- Loader -->
-    <div id="loader" class="loader"></div>
-
-    <!-- Scripts -->
-    <script src="scripts/sessionCheck.js"></script>
-    <script src="scripts/dashboardControl.js"></script>
+    <div class="loader" id="loader"></div>
 </body>
 </html>
