@@ -1,5 +1,7 @@
 // URL do seu Web App do Google Apps Script após o deploy
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxAaGOSL7NToFeAewuE2IWN39OpghdjiVqQ39MsCrpichP7gTzTODlrm3mVmJMiN1iq/exec';
+
+// Funções do Dashboard
 async function fetchDashboardData() {
     const token = sessionStorage.getItem('userToken');
     if (!token) {
@@ -32,6 +34,11 @@ function showLoader(show = true) {
     }
 }
 
+function showMessage(message, isError = false) {
+    // Implementar função de mensagem se necessário
+    console.log(message);
+}
+
 function updateEstatisticasGerais(estatisticas) {
     document.getElementById('totalAlunos').textContent = estatisticas.totalAlunos;
     document.getElementById('totalTransporte').textContent = estatisticas.transporteEscolar;
@@ -60,7 +67,6 @@ function createGeneroChart(dados) {
         }
     });
 }
-
 
 function createRacaChart(dados) {
     const racaData = Object.entries(dados.porRaca);
@@ -103,43 +109,19 @@ function updateMatriculasTable(matriculas) {
     });
 }
 
-document.addEventListener('DOMContentLoaded', async function() {
-    if (!checkAuth()) return;
-
-    try {
-        const dados = await fetchDashboardData();
-        if (!dados) return;
-
-        updateEstatisticasGerais(dados.estatisticas);
-        createGeneroChart(dados.estatisticas);
-        createRacaChart(dados.estatisticas);
-        updateMatriculasTable(dados.ultimasMatriculas);
-    } catch (error) {
-        console.error('Erro ao inicializar dashboard:', error);
-        showMessage('Erro ao carregar dashboard', true);
-    }
-});
-
-
-// Adicionar no início do dashboardControl.js
-
-// Controle do Menu Lateral e Usuario
-document.addEventListener('DOMContentLoaded', function() {
-    // Elementos do DOM
+// Funções do Menu Lateral
+function initSidebar() {
     const sidebar = document.getElementById('sidebar');
     const mainContent = document.getElementById('mainContent');
     const toggleBtn = document.getElementById('toggleSidebar');
     const userNameElement = document.getElementById('userName');
 
-    // Função para alternar o menu
-    function toggleSidebar() {
-        sidebar.classList.toggle('collapsed');
-        mainContent.classList.toggle('expanded');
-    }
-
-    // Adicionar evento de clique ao botão
+    // Configurar toggle do menu
     if (toggleBtn) {
-        toggleBtn.addEventListener('click', toggleSidebar);
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+        });
     }
 
     // Configurar nome do usuário
@@ -166,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Responsividade
+    // Configurar responsividade
     function checkScreenSize() {
         if (window.innerWidth <= 768) {
             sidebar.classList.add('collapsed');
@@ -174,7 +156,29 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Verificar tamanho da tela
     window.addEventListener('resize', checkScreenSize);
     checkScreenSize();
+}
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', async function() {
+    // Verificar autenticação
+    if (!checkAuth()) return;
+
+    // Inicializar menu lateral
+    initSidebar();
+
+    // Inicializar dashboard
+    try {
+        const dados = await fetchDashboardData();
+        if (!dados) return;
+
+        updateEstatisticasGerais(dados.estatisticas);
+        createGeneroChart(dados.estatisticas);
+        createRacaChart(dados.estatisticas);
+        updateMatriculasTable(dados.ultimasMatriculas);
+    } catch (error) {
+        console.error('Erro ao inicializar dashboard:', error);
+        showMessage('Erro ao carregar dashboard', true);
+    }
 });
