@@ -2,13 +2,13 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>G-EDUC - Dashboard</title>
+    <title>G-EDUC - Detalhes</title>
     <link rel="stylesheet" href="styles/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="scripts/sessionCheck.js"></script>
-    <script src="scripts/dashboardControl.js"></script>
+    <script src="scripts/detailsControl.js"></script>
 </head>
 <body>
     <div class="sidebar" id="sidebar">
@@ -20,7 +20,7 @@
         </div>
 
         <ul class="sidebar-menu">
-            <li class="active"><a href="dashboard.html"><i class="fas fa-chart-line"></i> <span>Dashboard</span></a></li>
+            <li><a href="dashboard.html"><i class="fas fa-chart-line"></i> <span>Dashboard</span></a></li>
             <!-- Outros itens do menu -->
             <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> <span>Sair</span></a></li>
         </ul>
@@ -34,19 +34,16 @@
         </div>
 
         <div class="dashboard-container">
-            <h2>Dashboard Geral</h2>
-            <div class="criteria-selector">
-                <label for="criteriaSelect">Selecionar Critério:</label>
-                <select id="criteriaSelect">
-                    <option value="porInstituicao">Instituição</option>
-                    <option value="porIdade">Idade (Faixa)</option>
-                    <option value="porPai">Pai (SIM/NÃO)</option>
-                    <option value="porNaturalidade">Naturalidade</option>
-                    <option value="porSexo">Sexo</option>
-                    <!-- Adicione outros critérios conforme necessário -->
-                </select>
+            <h2 id="detailTitle"></h2>
+            <!-- Aqui você pode colocar gráficos e totalizadores específicos -->
+            <div class="charts-container">
+                <!-- Exemplo de gráfico -->
+                <div class="chart-card">
+                    <h3>Distribuição por Sexo</h3>
+                    <canvas id="sexoChart"></canvas>
+                </div>
+                <!-- Adicione outros gráficos conforme necessário -->
             </div>
-            <div id="dataTableContainer"></div>
         </div>
     </div>
 
