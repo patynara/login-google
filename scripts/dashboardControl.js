@@ -1,4 +1,4 @@
-// URL do seu Web App do Google Apps Script após o deploy
+// URL do Web App do Google Apps Script
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxAaGOSL7NToFeAewuE2IWN39OpghdjiVqQ39MsCrpichP7gTzTODlrm3mVmJMiN1iq/exec';
 
 // Funções do Dashboard
@@ -35,8 +35,8 @@ function showLoader(show = true) {
 }
 
 function showMessage(message, isError = false) {
-    // Implementar função de mensagem se necessário
     console.log(message);
+    // Implementar mensagens visuais se necessário
 }
 
 function updateEstatisticasGerais(estatisticas) {
@@ -94,7 +94,9 @@ function createRacaChart(dados) {
 }
 
 function updateMatriculasTable(matriculas) {
-    const tbody = document.getElementById('matriculasTable');
+    const tbody = document.querySelector('.table-container table tbody');
+    if (!tbody) return;
+    
     tbody.innerHTML = '';
     
     matriculas.forEach(matricula => {
@@ -121,6 +123,16 @@ function initSidebar() {
         toggleBtn.addEventListener('click', () => {
             sidebar.classList.toggle('collapsed');
             mainContent.classList.toggle('expanded');
+            
+            // Alternar ícone
+            const icon = toggleBtn.querySelector('i');
+            if (sidebar.classList.contains('collapsed')) {
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-chevron-right');
+            } else {
+                icon.classList.remove('fa-chevron-right');
+                icon.classList.add('fa-bars');
+            }
         });
     }
 
@@ -141,7 +153,7 @@ function initSidebar() {
     const currentPage = window.location.pathname.split('/').pop() || 'dashboard.html';
     document.querySelectorAll('.sidebar-menu li').forEach(item => {
         const link = item.querySelector('a');
-        if (link.getAttribute('href') === currentPage) {
+        if (link && link.getAttribute('href') === currentPage) {
             item.classList.add('active');
         } else {
             item.classList.remove('active');
