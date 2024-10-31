@@ -3,122 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>G-EDUC - Dashboard</title>
+    
+    <!-- CSS -->
     <link rel="stylesheet" href="styles/dashboardStyles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="scripts/sessionCheck.js"></script>
+    <script src="scripts/dashboardControl.js"></script>
 </head>
 <body>
-    <!-- Menu Lateral -->
-    <nav class="sidebar" id="sidebar">
+    <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <span class="header-title">G-EDUC</span>
             <button id="toggleSidebar" class="toggle-btn">
                 <i class="fas fa-bars"></i>
             </button>
         </div>
-        <ul class="sidebar-menu">
-            <li class="active">
-                <a href="dashboard.html">
-                    <i class="fas fa-chart-line"></i>
-                    <span>DashboardA</span>
-                </a>
-            </li>
-            <li>
-                <a href="alunos.html">
-                    <i class="fas fa-user-graduate"></i>
-                    <span>Alunos</span>
-                </a>
-            </li>
-            <li>
-                <a href="turmas.html">
-                    <i class="fas fa-users"></i>
-                    <span>Turmas</span>
-                </a>
-            </li>
-            <li>
-                <a href="matriculas.html">
-                    <i class="fas fa-file-signature"></i>
-                    <span>Matrículas</span>
-                </a>
-            </li>
-            <li>
-                <a href="relatorios.html">
-                    <i class="fas fa-file-alt"></i>
-                    <span>Relatórios</span>
-                </a>
-            </li>
-        </ul>
-    </nav>
 
-    <div class="main-content" id="mainContent">
-        <!-- Top Bar -->
+        <ul class="sidebar-menu">
+            <li class="active"><a href="dashboard.html"><i class="fas fa-chart-line"></i> <span>Dashboard</span></a></li>
+            <li><a href="alunos.html"><i class="fas fa-user-graduate"></i> <span>Alunos</span></a></li>
+            <li><a href="turmas.html"><i class="fas fa-users"></i> <span>Turmas</span></a></li>
+            <li><a href="matriculas.html"><i class="fas fa-file-alt"></i> <span>Matrículas</span></a></li>
+            <li><a href="relatorios.html"><i class="fas fa-chart-bar"></i> <span>Relatórios</span></a></li>
+        </ul>
+    </div>
+
+    <div id="mainContent" class="main-content">
         <div class="top-bar">
             <div class="user-info">
-                <span id="welcomeMessage">Bem-vindo(a), </span>
-                <span id="userName"></span>
+                Bem-vindo(a), <span id="userName"></span>
             </div>
-            <button id="logoutBtn" class="logout-btn" title="Sair">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>Sair</span>
+            <button id="logoutBtn" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i> Sair
             </button>
         </div>
 
         <div class="dashboard-container">
-            <!-- Dashboard Grid -->
             <div class="dashboard-grid">
-        <div class="card stats-card">
-            <h3>Estatísticas Gerais</h3>
-            <div class="stats-container">
-                <div class="stat-item">
-                    <span class="stat-value" id="totalAlunos">0</span>
-                    <span class="stat-label">Total de Alunos</span>
+                <div class="card stats-card">
+                    <h3>Estatísticas Gerais</h3>
+                    <div class="stats-container">
+                        <div class="stat-item">
+                            <span id="totalAlunos" class="stat-value">0</span>
+                            <span class="stat-label">Total de Alunos</span>
+                        </div>
+                        <div class="stat-item">
+                            <span id="totalTransporte" class="stat-value">0</span>
+                            <span class="stat-label">Usam Transporte</span>
+                        </div>
+                        <div class="stat-item">
+                            <span id="totalBolsa" class="stat-value">0</span>
+                            <span class="stat-label">Bolsa Família</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-value" id="totalTransporte">0</span>
-                    <span class="stat-label">Usam Transporte</span>
+
+                <div class="card chart-card">
+                    <h3>Distribuição por Gênero</h3>
+                    <div class="chart-container">
+                        <canvas id="generoChart"></canvas>
+                    </div>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-value" id="totalBolsa">0</span>
-                    <span class="stat-label">Bolsa Família</span>
+
+                <div class="card chart-card">
+                    <h3>Distribuição por Raça/Cor</h3>
+                    <div class="chart-container">
+                        <canvas id="racaChart"></canvas>
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="card chart-card">
-            <h3>Distribuição por Gênero</h3>
-            <div class="chart-container">
-                <canvas id="generoChart"></canvas>
-            </div>
-        </div>
-
-        <div class="card chart-card">
-            <h3>Distribuição por Raça/Cor</h3>
-            <div class="chart-container">
-                <canvas id="racaChart"></canvas>
-            </div>
-        </div>
-
-        <div class="card wide">
-            <h3>Últimas Matrículas</h3>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Aluno</th>
-                            <th>Data</th>
-                            <th>Turma</th>
-                            <th>Turno</th>
-                        </tr>
-                    </thead>
-                    <tbody id="matriculasTable"></tbody>
-                </table>
+                <div class="card wide">
+                    <h3>Últimas Matrículas</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Aluno</th>
+                                    <th>Data</th>
+                                    <th>Turma</th>
+                                    <th>Turno</th>
+                                </tr>
+                            </thead>
+                            <tbody id="matriculasTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
-</div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
-<script src="scripts/sessionCheck.js"></script>
-<script src="scripts/dashboardControl.js"></script>
+
+    <div class="loader" id="loader"></div>
 </body>
 </html>
