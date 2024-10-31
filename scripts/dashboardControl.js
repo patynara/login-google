@@ -1,3 +1,4 @@
+// scripts/dashboardControl.js
 import { APPS_SCRIPT_URL } from './config.js';
 
 let globalData = null;
@@ -33,31 +34,89 @@ async function fetchDashboardData(filterField = null, filterValue = null) {
 }
 
 function initializeDataTable(data) {
+    // Destruir tabela existente se houver
     if (dataTable) {
         dataTable.destroy();
     }
 
+    // Criar estrutura da tabela se não existir
+    if (!document.getElementById('mainTable')) {
+        const tableHtml = `
+            <table id="mainTable" class="display" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Instituição</th>
+                        <th>Curso</th>
+                        <th>Turma</th>
+                        <th>Turno</th>
+                        <th>Total Alunos</th>
+                    </tr>
+                </thead>
+            </table>
+        `;
+        document.getElementById('dataTableContainer').innerHTML = tableHtml;
+    }
+
+    // Processar dados para agrupar por instituição, curso, turma e turno
+    const groupedData = data.reduce((acc, curr) => {
+        const key = `${curr.instituicao}-${curr.curso}-${curr.turma}-${curr.turno}`;
+        if (!acc[key]) {
+            acc[key] = {
+                instituicao: curr.instituicao,
+                curso: curr.curso,
+                turma: curr.turma,
+                turno: curr.turno,
+                totalAlunos: 0
+            };
+        }
+        acc[key].totalAlunos++;
+        return acc;
+    }, {});
+
+    // Converter dados agrupados para array
+    const tableData = Object.values(groupedData);
+
+    // Inicializar DataTable
     dataTable = $('#mainTable').DataTable({
-        data: data.filteredData,
+        data: tableData,
         columns: [
-            { data: 'instituicao', title: 'Instituição' },
-            { data: 'curso', title: 'Curso' },
-            { data: 'turma', title: 'Turma' },
-            { data: 'turno', title: 'Turno' }
-        ],
-        dom: 'Bfrtip',
-        buttons: [
-            'copy', 'csv', 'excel', 'pdf', 'print'
+            { data: 'instituicao' },
+            { data: 'curso' },
+            { data: 'turma' },
+            { data: 'turno' },
+            { data: 'totalAlunos' }
         ],
         language: {
             url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
         },
+        dom: 'Bfrtip',
+        buttons: [
+            'copy', 'csv', 'excel', 'pdf', 'print'
+        ],
         initComplete: function() {
-            // Adiciona evento de clique nas linhas
-            $('#mainTable tbody').on('click', 'tr', function() {
-                const data = dataTable.row(this).data();
-                showCharts(data.instituicao);
+            // Adicionar filtros individuais para cada coluna
+            this.api().columns().every(function() {
+                const column = this;
+                const header = $(column.header());
+                const title = header.text();
+
+                // Criar input de pesquisa
+                const input = $('<input type="text" placeholder="Filtrar ' + title + '" />')
+                    .appendTo(header)
+                    .on('keyup change', function() {
+                        if (column.search() !== this.value) {
+                            column.search(this.value).draw();
+                        }
+                    });
             });
+        }
+    });
+
+    // Adicionar evento de clique nas linhas
+    $('#mainTable tbody').on('click', 'tr', function() {
+        const data = dataTable.row(this).data();
+        if (data) {
+            showDetails(data);
         }
     });
 }
@@ -70,159 +129,8 @@ function updateEstatisticasGerais(analytics) {
         Object.keys(analytics.alunosBolsaFamilia).length;
 }
 
-function showCharts(instituicao) {
-    const chartsContainer = document.getElementById('chartsContainer');
-    chartsContainer.style.display = 'grid';
-    
-    // Limpa gráficos existentes
-    const chartIds = ['escolaChart', 'turmaChart', 'cursoIdadeChart', 'deficienciaChart'];
-    chartIds.forEach(id => {
-        const canvas = document.getElementById(id);
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-    });
-
-    // Filtra dados para a instituição selecionada
-    const filteredAnalytics = filterDataByInstituicao(globalData.analytics, instituicao);
-    
-    // Cria novos gráficos
-    createEscolaChart(filteredAnalytics);
-    createTurmaChart(filteredAnalytics);
-    createCursoIdadeChart(filteredAnalytics);
-    createDeficienciaChart(filteredAnalytics);
-    // Adicione mais chamadas para outros gráficos
-}
-
-function filterDataByInstituicao(analytics, instituicao) {
-    // Filtra os dados para a instituição selecionada
-    const filtered = {};
-    Object.keys(analytics).forEach(key => {
-        if (typeof analytics[key] === 'object') {
-            filtered[key] = Object.entries(analytics[key])
-                .filter(([k]) => k.includes(instituicao))
-                .reduce((obj, [k, v]) => ({...obj, [k]: v}), {});
-        } else {
-            filtered[key] = analytics[key];
-        }
-    });
-    return filtered;
-}
-
-function createEscolaChart(analytics) {
-    const ctx = document.getElementById('escolaChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: Object.keys(analytics.alunosPorEscola),
-            datasets: [{
-                label: 'Alunos por Escola',
-                data: Object.values(analytics.alunosPorEscola),
-                backgroundColor: '#4a90e2'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
-    });
-}
-
-function createTurmaChart(analytics) {
-    const ctx = document.getElementById('turmaChart').getContext('2d');
-    const turmaData = Object.entries(analytics.alunosPorTurma)
-        .reduce((acc, [key, value]) => {
-            const [curso, turma] = key.split('-');
-            if (!acc[curso]) acc[curso] = {};
-            acc[curso][turma] = value;
-            return acc;
-        }, {});
-
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: Object.keys(turmaData),
-            datasets: Object.keys(turmaData[Object.keys(turmaData)[0]] || {}).map((turma, index) => ({
-                label: turma,
-                data: Object.values(turmaData).map(curso => curso[turma] || 0),
-                backgroundColor: getChartColor(index)
-            }))
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
-    });
-}
-
-function createCursoIdadeChart(analytics) {
-    const ctx = document.getElementById('cursoIdadeChart').getContext('2d');
-    const cursoIdadeData = Object.entries(analytics.alunosPorCursoIdade)
-        .reduce((acc, [key, value]) => {
-            const [curso, idade] = key.split('-');
-            if (!acc[curso]) acc[curso] = {};
-            acc[curso][idade] = value;
-            return acc;
-        }, {});
-
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: Object.keys(cursoIdadeData),
-            datasets: Object.keys(cursoIdadeData[Object.keys(cursoIdadeData)[0]] || {}).map((idade, index) => ({
-                label: `${idade} anos`,
-                data: Object.values(cursoIdadeData).map(curso => curso[idade] || 0),
-                backgroundColor: getChartColor(index)
-            }))
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
-    });
-}
-
-function createDeficienciaChart(analytics) {
-    const ctx = document.getElementById('deficienciaChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: ['Com Deficiência', 'Sem Deficiência'],
-            datasets: [{
-                data: [
-                    Object.values(analytics.alunosDeficienciaPorEscola).reduce((a, b) => a + b, 0),
-                    analytics.totalAlunos - Object.values(analytics.alunosDeficienciaPorEscola).reduce((a, b) => a + b, 0)
-                ],
-                backgroundColor: ['#ff6b6b', '#4a90e2']
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
-        }
-    });
-}
-
-function getChartColor(index) {
-    const colors = [
-        '#4a90e2', '#50c878', '#ff6b6b', '#ffd700', 
-        '#8884d8', '#82ca9d', '#ff7c43', '#a05195'
-    ];
-    return colors[index % colors.length];
+function showDetails(data) {
+    window.location.href = `details.html?instituicao=${encodeURIComponent(data.instituicao)}&curso=${encodeURIComponent(data.curso)}&turma=${encodeURIComponent(data.turma)}`;
 }
 
 function showLoader(show = true) {
@@ -237,11 +145,69 @@ function showMessage(message, isError = false) {
     // Implementar mensagens visuais se necessário
 }
 
+// Adicionar estilos CSS para a tabela
+function addTableStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        #mainTable_wrapper {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #mainTable thead input {
+            width: 100%;
+            padding: 4px;
+            margin: 4px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        #mainTable tbody tr {
+            cursor: pointer;
+        }
+
+        #mainTable tbody tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .dataTables_wrapper .dt-buttons {
+            margin-bottom: 10px;
+        }
+
+        .dt-button {
+            padding: 5px 10px;
+            margin-right: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+        }
+
+        .dt-button:hover {
+            background-color: #e9ecef;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
 // Inicialização
 document.addEventListener('DOMContentLoaded', async function() {
     if (!checkAuth()) return;
 
     initSidebar();
+    addTableStyles();
 
     try {
-        const data = await fetchDashboar
+        const data = await fetchDashboardData();
+        if (data) {
+            globalData = data;
+            updateEstatisticasGerais(data.analytics);
+            initializeDataTable(data.filteredData);
+        }
+    } catch (error) {
+        console.error('Erro ao inicializar dashboard:', error);
+    }
+});

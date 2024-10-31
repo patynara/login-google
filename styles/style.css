@@ -278,3 +278,119 @@ table.datatable tr:hover {
         padding: 1rem;
     }
 }
+
+/* Estilos para a DataTable */
+.dataTables_wrapper {
+    padding: 20px;
+    margin-top: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.dataTables_filter {
+    margin-bottom: 1rem;
+}
+
+.dataTables_filter input {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-left: 0.5rem;
+}
+
+.dataTables_length select {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin: 0 0.5rem;
+}
+
+.dataTables_info {
+    padding: 1rem 0;
+}
+
+.dataTables_paginate {
+    padding: 1rem 0;
+}
+
+.dataTables_paginate .paginate_button {
+    padding: 0.5rem 1rem;
+    margin: 0 0.25rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.dataTables_paginate .paginate_button.current {
+    background-color: #4a90e2;
+    color: white;
+    border-color: #4a90e2;
+}
+
+.dataTables_paginate .paginate_button:hover {
+    background-color: #f5f5f5;
+}
+
+table.dataTable thead th {
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
+table.dataTable tbody td {
+    padding: 10px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+/* Estilos para os botões de exportação */
+.dt-buttons {
+    margin-bottom: 1rem;
+}
+
+.dt-button {
+    padding: 0.5rem 1rem;
+    margin-right: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.dt-button:hover {
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+}
+
+/* Estilos para inputs de filtro */
+table.dataTable thead input {
+    width: 100%;
+    padding: 4px;
+    margin: 4px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .dataTables_wrapper {
+        padding: 10px;
+    }
+
+    .dt-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .dt-button {
+        flex: 1 1 auto;
+        margin: 2px;
+    }
+
+    table.dataTable thead input {
+        font-size: 0.8em;
+    }
+}
