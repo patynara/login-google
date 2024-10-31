@@ -1,5 +1,5 @@
 // URL do Web App do Google Apps Script
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxAaGOSL7NToFeAewuE2IWN39OpghdjiVqQ39MsCrpichP7gTzTODlrm3mVmJMiN1iq/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzEPx4T8zPdCQY4I2P3KQCUDhpGEUYlQkpKf1ySMdQ1ku2T2mGDdKvM2Ppd524tfsXo/exec';
 
 // Funções do Dashboard
 async function fetchDashboardData(filterField = null, filterValue = null) {
