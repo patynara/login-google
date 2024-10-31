@@ -1,161 +1,230 @@
-// URL do Web App do Google Apps Script
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzEPx4T8zPdCQY4I2P3KQCUDhpGEUYlQkpKf1ySMdQ1ku2T2mGDdKvM2Ppd524tfsXo/exec';
+import { APPS_SCRIPT_URL } from './config.js';
 
-let globalTotals = {};
+
+let globalData = null;
+let dataTable = null;
 
 async function fetchDashboardData(filterField = null, filterValue = null) {
-  const token = sessionStorage.getItem('userToken');
-  if (!token) {
-    window.location.href = 'index.html';
-    return;
-  }
-
-  try {
-    showLoader(true);
-    let url = `${APPS_SCRIPT_URL}?action=dashboard&token=${token}`;
-    if (filterField && filterValue) {
-      url += `&filterField=${filterField}&filterValue=${encodeURIComponent(filterValue)}`;
-    }
-    const response = await fetch(url);
-    const result = await response.json();
-
-    if (!result.autorizado) {
-      throw new Error(result.message || 'Não autorizado');
+    const token = sessionStorage.getItem('userToken');
+    if (!token) {
+        window.location.href = 'index.html';
+        return;
     }
 
-    return result.data;
-  } catch (error) {
-    console.error('Erro ao buscar dados:', error);
-    showMessage('Erro ao carregar dados do dashboard', true);
-  } finally {
-    showLoader(false);
-  }
+    try {
+        showLoader(true);
+        let url = `${APPS_SCRIPT_URL}?action=dashboard&token=${token}`;
+        if (filterField && filterValue) {
+            url += `&filterField=${filterField}&filterValue=${encodeURIComponent(filterValue)}`;
+        }
+        const response = await fetch(url);
+        const result = await response.json();
+
+        if (!result.autorizado) {
+            throw new Error(result.message || 'Não autorizado');
+        }
+
+        return result.data;
+    } catch (error) {
+        console.error('Erro ao buscar dados:', error);
+        showMessage('Erro ao carregar dados do dashboard', true);
+    } finally {
+        showLoader(false);
+    }
 }
 
-function updateDashboard(data) {
-    // Atualizar totalizadores gerais
-    updateEstatisticasGerais(data.totals);
-  
-    // Atualizar gráficos
-    createCharts(data.totals);
-  
-    // Armazenar os totais globalmente
-    globalTotals = data.totals;
-  
-    // Criar tabela inicial
-    const criteriaSelect = document.getElementById('criteriaSelect');
-    const selectedField = criteriaSelect.value;
-    const selectedLabel = criteriaSelect.options[criteriaSelect.selectedIndex].text;
-    createDataTable(globalTotals, selectedField, selectedLabel);
-  }
+function initializeDataTable(data) {
+    if (dataTable) {
+        dataTable.destroy();
+    }
 
-function updateEstatisticasGerais(totals) {
-    document.getElementById('totalAlunos').textContent = totals.totalAlunos || 0;
-    document.getElementById('totalTransporte').textContent = totals.porTransporteTipo['Ônibus'] || 0;
-    document.getElementById('totalBolsa').textContent = totals.porBolsaFamilia['sim'] || 0;
-  }
-
-function createDataTable(totals, field, label) {
-  const data = Object.entries(totals[field]).map(([key, count]) => ({ key, count }));
-
-  const container = document.getElementById('dataTableContainer');
-  if (!container) return;
-
-  container.innerHTML = '';
-
-  const table = document.createElement('table');
-  table.classList.add('datatable');
-
-  const thead = document.createElement('thead');
-  const headerRow = document.createElement('tr');
-  const thField = document.createElement('th');
-  thField.textContent = label;
-  const thCount = document.createElement('th');
-  thCount.textContent = 'Quantidade de Alunos';
-  headerRow.appendChild(thField);
-  headerRow.appendChild(thCount);
-  thead.appendChild(headerRow);
-  table.appendChild(thead);
-
-  const tbody = document.createElement('tbody');
-  data.forEach(item => {
-    const tr = document.createElement('tr');
-    const tdField = document.createElement('td');
-    tdField.textContent = item.key;
-    tdField.classList.add('field-cell');
-    const tdCount = document.createElement('td');
-    tdCount.textContent = item.count;
-    tr.appendChild(tdField);
-    tr.appendChild(tdCount);
-    tbody.appendChild(tr);
-
-    tr.addEventListener('click', () => {
-      // Salvar o filtro nos parâmetros da URL
-      const params = new URLSearchParams();
-      params.append('filterField', field);
-      params.append('filterValue', item.key);
-      window.location.href = `details.html?${params.toString()}`;
+    dataTable = $('#mainTable').DataTable({
+        data: data.filteredData,
+        columns: [
+            { data: 'instituicao', title: 'Instituição' },
+            { data: 'curso', title: 'Curso' },
+            { data: 'turma', title: 'Turma' },
+            { data: 'turno', title: 'Turno' }
+        ],
+        dom: 'Bfrtip',
+        buttons: [
+            'copy', 'csv', 'excel', 'pdf', 'print'
+        ],
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
+        },
+        initComplete: function() {
+            $('#mainTable tbody').on('click', 'tr', function() {
+                const data = dataTable.row(this).data();
+                showCharts(data.instituicao);
+            });
+        }
     });
-  });
-  table.appendChild(tbody);
-  container.appendChild(table);
 }
 
-function handleCriteriaSelection() {
-  const criteriaSelect = document.getElementById('criteriaSelect');
-  criteriaSelect.addEventListener('change', function() {
-    const selectedField = criteriaSelect.value;
-    const selectedLabel = criteriaSelect.options[criteriaSelect.selectedIndex].text;
-
-    createDataTable(globalTotals, selectedField, selectedLabel);
-  });
+function updateEstatisticasGerais(analytics) {
+    document.getElementById('totalAlunos').textContent = analytics.totalAlunos || 0;
+    document.getElementById('totalTransporte').textContent = 
+        Object.values(analytics.transporteEscola).reduce((a, b) => a + b, 0);
+    document.getElementById('totalBolsa').textContent = 
+        Object.keys(analytics.alunosBolsaFamilia).length;
 }
 
-function createCharts(totals) {
-  // Exemplo de criação de gráfico de Pizza para Sexo
-  const ctxSexo = document.getElementById('sexoChart');
-  if (ctxSexo) {
-    new Chart(ctxSexo, {
-      type: 'pie',
-      data: {
-        labels: Object.keys(totals.porSexo),
+function showCharts(instituicao) {
+    const chartsContainer = document.getElementById('chartsContainer');
+    chartsContainer.style.display = 'grid';
+    
+    // Limpa gráficos existentes
+    const chartCanvases = chartsContainer.querySelectorAll('canvas');
+    chartCanvases.forEach(canvas => {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    });
+
+    // Filtra dados para a instituição selecionada
+    const filteredAnalytics = filterDataByInstituicao(globalData.analytics, instituicao);
+    
+    // Atualiza todos os gráficos
+    updateAllCharts(instituicao);
+}
+
+function filterDataByInstituicao(analytics, instituicao) {
+    const filtered = {};
+    Object.keys(analytics).forEach(key => {
+        if (typeof analytics[key] === 'object') {
+            filtered[key] = Object.entries(analytics[key])
+                .filter(([k]) => k.includes(instituicao))
+                .reduce((obj, [k, v]) => ({...obj, [k]: v}), {});
+        } else {
+            filtered[key] = analytics[key];
+        }
+    });
+    return filtered;
+}
+
+function getChartColor(index) {
+    const colors = [
+        '#4a90e2', '#50c878', '#ff6b6b', '#ffd700', 
+        '#8884d8', '#82ca9d', '#ff7c43', '#a05195'
+    ];
+    return colors[index % colors.length];
+}
+
+function updateAllCharts(instituicao) {
+    const filteredAnalytics = filterDataByInstituicao(globalData.analytics, instituicao);
+    
+    // Cria ou atualiza cada gráfico
+    createEscolaChart(filteredAnalytics);
+    createTurmaChart(filteredAnalytics);
+    createCursoIdadeChart(filteredAnalytics);
+    createDeficienciaChart(filteredAnalytics);
+    createAlunosCursoDeficienciaChart(filteredAnalytics);
+    createAlunosCursoCorChart(filteredAnalytics, instituicao);
+    createAlunosTransporteZonaChart(filteredAnalytics);
+    createAlunosBolsaFamiliaChart(filteredAnalytics, instituicao);
+    createAlunosSituacaoChart(filteredAnalytics, instituicao);
+    createAlunosTurnoChart(filteredAnalytics);
+    createAlunosTempoIntegralChart(filteredAnalytics);
+    createAlunosIdadeTransporteChart(filteredAnalytics);
+}
+
+function createChart(canvasId, type, data, options = {}) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    return new Chart(ctx, {
+        type: type,
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            ...options
+        }
+    });
+}
+
+// Funções específicas para cada gráfico
+function createEscolaChart(analytics) {
+    createChart('escolaChart', 'bar', {
+        labels: Object.keys(analytics.alunosPorEscola),
         datasets: [{
-          data: Object.values(totals.porSexo),
-          backgroundColor: ['#4a90e2', '#ff6b6b', '#50c878', '#ffd700']
+            label: 'Alunos por Escola',
+            data: Object.values(analytics.alunosPorEscola),
+            backgroundColor: '#4a90e2'
         }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false
-      }
     });
-  }
+}
+
+function createTurmaChart(analytics) {
+    const turmaData = Object.entries(analytics.alunosPorTurma)
+        .reduce((acc, [key, value]) => {
+            const [curso, turma] = key.split('-');
+            if (!acc[curso]) acc[curso] = {};
+            acc[curso][turma] = value;
+            return acc;
+        }, {});
+
+    createChart('turmaChart', 'bar', {
+        labels: Object.keys(turmaData),
+        datasets: Object.keys(turmaData[Object.keys(turmaData)[0]] || {}).map((turma, index) => ({
+            label: turma,
+            data: Object.values(turmaData).map(curso => curso[turma] || 0),
+            backgroundColor: getChartColor(index)
+        }))
+    });
+}
+
+function createCursoIdadeChart(analytics) {
+    const cursoIdadeData = Object.entries(analytics.alunosPorCursoIdade)
+        .reduce((acc, [key, value]) => {
+            const [curso, idade] = key.split('-');
+            if (!acc[curso]) acc[curso] = {};
+            acc[curso][idade] = value;
+            return acc;
+        }, {});
+
+    createChart('cursoIdadeChart', 'bar', {
+        labels: Object.keys(cursoIdadeData),
+        datasets: Object.keys(cursoIdadeData[Object.keys(cursoIdadeData)[0]] || {}).map((idade, index) => ({
+            label: `${idade} anos`,
+            data: Object.values(cursoIdadeData).map(curso => curso[idade] || 0),
+            backgroundColor: getChartColor(index)
+        }))
+    });
 }
 
 function showLoader(show = true) {
-  const loader = document.getElementById('loader');
-  if (loader) {
-    loader.style.display = show ? 'block' : 'none';
-  }
+    const loader = document.getElementById('loader');
+    if (loader) {
+        loader.style.display = show ? 'block' : 'none';
+    }
 }
 
 function showMessage(message, isError = false) {
-  console.log(message);
-  // Implementar mensagens visuais se necessário
+    console.log(message);
+    // Implementar mensagens visuais se necessário
 }
 
+// Inicialização
 document.addEventListener('DOMContentLoaded', async function() {
-  if (!checkAuth()) return;
+    if (!checkAuth()) return;
 
-  initSidebar();
-  handleCriteriaSelection();
+    initSidebar();
 
-  try {
-    const data = await fetchDashboardData();
-    if (data) {
-      updateDashboard(data);
+    try {
+        const data = await fetchDashboardData();
+        if (data) {
+            globalData = data;
+            initializeDataTable(data);
+            updateEstatisticasGerais(data.analytics);
+            
+            // Inicialmente oculta a área de gráficos
+            const chartsContainer = document.getElementById('chartsContainer');
+            chartsContainer.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Erro ao inicializar dashboard:', error);
+        showMessage('Erro ao carregar dados do dashboard', true);
     }
-  } catch (error) {
-    console.error('Erro ao inicializar dashboard:', error);
-  }
 });
