@@ -1,77 +1,109 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // Dados exemplo - Em produção, você buscaria estes dados de uma API
-    const monthlyData = {
-        labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
-        datasets: [{
-            label: 'Vendas',
-            data: [65, 59, 80, 81, 56, 55],
-            backgroundColor: '#4a90e2'
-        }]
-    };
+// URL do seu Web App do Google Apps Script após o deploy
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxAaGOSL7NToFeAewuE2IWN39OpghdjiVqQ39MsCrpichP7gTzTODlrm3mVmJMiN1iq/exec';
+async function fetchDashboardData() {
+    const token = sessionStorage.getItem('userToken');
+    if (!token) {
+        window.location.href = 'index.html';
+        return;
+    }
 
-    const distributionData = {
-        labels: ['Categoria A', 'Categoria B', 'Categoria C', 'Categoria D'],
-        datasets: [{
-            data: [30, 25, 25, 20],
-            backgroundColor: ['#4a90e2', '#50c878', '#ff6b6b', '#ffd700']
-        }]
-    };
+    try {
+        showLoader(true);
+        const response = await fetch(`${APPS_SCRIPT_URL}?action=dashboard&token=${token}`);
+        const result = await response.json();
 
-    // Configurar gráficos
-    const generalStats = new Chart(document.getElementById('generalStats'), {
-        type: 'bar',
-        data: monthlyData,
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'top',
-                }
-            }
+        if (!result.autorizado) {
+            throw new Error(result.message || 'Não autorizado');
         }
-    });
 
-    const monthlyChart = new Chart(document.getElementById('monthlyData'), {
-        type: 'line',
+        return result.data;
+    } catch (error) {
+        console.error('Erro ao buscar dados:', error);
+        showMessage('Erro ao carregar dados do dashboard', true);
+    } finally {
+        showLoader(false);
+    }
+}
+
+function showLoader(show = true) {
+    const loader = document.querySelector('.loader');
+    if (loader) {
+        loader.style.display = show ? 'block' : 'none';
+    }
+}
+
+function updateEstatisticasGerais(estatisticas) {
+    document.getElementById('totalAlunos').textContent = estatisticas.totalAlunos;
+    document.getElementById('totalTransporte').textContent = estatisticas.transporteEscolar;
+    document.getElementById('totalBolsa').textContent = estatisticas.bolsaFamilia;
+}
+
+function createGeneroChart(dados) {
+    const ctx = document.getElementById('generoChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
         data: {
-            labels: monthlyData.labels,
+            labels: ['Masculino', 'Feminino'],
             datasets: [{
-                label: 'Crescimento',
-                data: [20, 35, 45, 30, 55, 65],
-                borderColor: '#50c878',
-                tension: 0.1
+                data: [dados.porGenero.masculino, dados.porGenero.feminino],
+                backgroundColor: ['#4a90e2', '#ff6b6b']
             }]
         },
         options: {
-            responsive: true
+            responsive: true,
+            maintainAspectRatio: false
         }
     });
+}
 
-    const distributionChart = new Chart(document.getElementById('distributionChart'), {
+function createRacaChart(dados) {
+    const racaData = Object.entries(dados.porRaca);
+    const ctx = document.getElementById('racaChart').getContext('2d');
+    new Chart(ctx, {
         type: 'doughnut',
-        data: distributionData,
+        data: {
+            labels: racaData.map(([raca]) => raca),
+            datasets: [{
+                data: racaData.map(([, valor]) => valor),
+                backgroundColor: ['#4a90e2', '#50c878', '#ffd700', '#ff6b6b', '#8884d8']
+            }]
+        },
         options: {
-            responsive: true
+            responsive: true,
+            maintainAspectRatio: false
         }
     });
+}
 
-    // Preencher tabela com dados exemplo
-    const tableData = [
-        { data: '2024-01-01', descricao: 'Projeto A', status: 'Concluído', valor: 'R$ 1.500,00' },
-        { data: '2024-01-15', descricao: 'Projeto B', status: 'Em andamento', valor: 'R$ 2.300,00' },
-        { data: '2024-02-01', descricao: 'Projeto C', status: 'Pendente', valor: 'R$ 800,00' },
-        { data: '2024-02-15', descricao: 'Projeto D', status: 'Concluído', valor: 'R$ 3.200,00' }
-    ];
-
-    const tableBody = document.getElementById('tableBody');
-    tableData.forEach(row => {
+function updateMatriculasTable(matriculas) {
+    const tbody = document.getElementById('matriculasTable');
+    tbody.innerHTML = '';
+    
+    matriculas.forEach(matricula => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${row.data}</td>
-            <td>${row.descricao}</td>
-            <td>${row.status}</td>
-            <td>${row.valor}</td>
+            <td>${matricula.aluno}</td>
+            <td>${new Date(matricula.data).toLocaleDateString()}</td>
+            <td>${matricula.turma}</td>
+            <td>${matricula.turno}</td>
         `;
-        tableBody.appendChild(tr);
+        tbody.appendChild(tr);
     });
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+    if (!checkAuth()) return;
+
+    try {
+        const dados = await fetchDashboardData();
+        if (!dados) return;
+
+        updateEstatisticasGerais(dados.estatisticas);
+        createGeneroChart(dados.estatisticas);
+        createRacaChart(dados.estatisticas);
+        updateMatriculasTable(dados.ultimasMatriculas);
+    } catch (error) {
+        console.error('Erro ao inicializar dashboard:', error);
+        showMessage('Erro ao carregar dashboard', true);
+    }
 });

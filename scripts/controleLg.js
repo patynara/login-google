@@ -1,5 +1,5 @@
 // URL do seu Web App do Google Apps Script após o deploy
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxdO6_2M_W0mYqDz5kpSeS29WmI_h6DkzUVi0z2LX07F6UsNJAWnZqgvZ_p4HjRI2bG/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxAaGOSL7NToFeAewuE2IWN39OpghdjiVqQ39MsCrpichP7gTzTODlrm3mVmJMiN1iq/exec';
 
 function showMessage(message, isError = false) {
     const messageBox = document.getElementById('messageBox');
