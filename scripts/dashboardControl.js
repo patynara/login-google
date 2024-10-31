@@ -121,20 +121,52 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 
-document.addEventListener('DOMContentLoaded', function() {
-    const sidebar = document.getElementById('sidebar');
-    const mainContent = document.querySelector('.main-content');
-    const toggleBtn = document.getElementById('toggleSidebar');
+// Adicionar no início do dashboardControl.js
 
+// Controle do Menu Lateral e Usuario
+document.addEventListener('DOMContentLoaded', function() {
+    // Elementos do DOM
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    const toggleBtn = document.getElementById('toggleSidebar');
+    const userNameElement = document.getElementById('userName');
+
+    // Função para alternar o menu
     function toggleSidebar() {
         sidebar.classList.toggle('collapsed');
         mainContent.classList.toggle('expanded');
     }
 
-    // Toggle no clique do botão
-    toggleBtn.addEventListener('click', toggleSidebar);
+    // Adicionar evento de clique ao botão
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', toggleSidebar);
+    }
 
-    // Responsividade em telas menores
+    // Configurar nome do usuário
+    if (userNameElement) {
+        const userName = sessionStorage.getItem('userName');
+        if (userName) {
+            try {
+                const decodedName = decodeURIComponent(escape(userName));
+                userNameElement.textContent = decodedName;
+            } catch (e) {
+                userNameElement.textContent = userName;
+            }
+        }
+    }
+
+    // Marcar item atual do menu
+    const currentPage = window.location.pathname.split('/').pop() || 'dashboard.html';
+    document.querySelectorAll('.sidebar-menu li').forEach(item => {
+        const link = item.querySelector('a');
+        if (link.getAttribute('href') === currentPage) {
+            item.classList.add('active');
+        } else {
+            item.classList.remove('active');
+        }
+    });
+
+    // Responsividade
     function checkScreenSize() {
         if (window.innerWidth <= 768) {
             sidebar.classList.add('collapsed');
@@ -142,13 +174,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Verificar tamanho da tela ao carregar e redimensionar
+    // Verificar tamanho da tela
     window.addEventListener('resize', checkScreenSize);
     checkScreenSize();
-
-    // Atualizar nome do usuário com decode URI
-    const userName = sessionStorage.getItem('userName');
-    if (userName) {
-        document.getElementById('userName').textContent = decodeURIComponent(userName);
-    }
 });
+
+// Resto do código do dashboard...
