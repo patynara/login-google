@@ -33,20 +33,27 @@ async function fetchDashboardData(filterField = null, filterValue = null) {
 }
 
 function updateDashboard(data) {
-  // Atualizar totalizadores gerais (se houver)
+    // Atualizar totalizadores gerais
+    updateEstatisticasGerais(data.totals);
+  
+    // Atualizar gráficos
+    createCharts(data.totals);
+  
+    // Armazenar os totais globalmente
+    globalTotals = data.totals;
+  
+    // Criar tabela inicial
+    const criteriaSelect = document.getElementById('criteriaSelect');
+    const selectedField = criteriaSelect.value;
+    const selectedLabel = criteriaSelect.options[criteriaSelect.selectedIndex].text;
+    createDataTable(globalTotals, selectedField, selectedLabel);
+  }
 
-  // Atualizar gráficos
-  createCharts(data.totals);
-
-  // Armazenar os totais globalmente
-  globalTotals = data.totals;
-
-  // Criar tabela inicial
-  const criteriaSelect = document.getElementById('criteriaSelect');
-  const selectedField = criteriaSelect.value;
-  const selectedLabel = criteriaSelect.options[criteriaSelect.selectedIndex].text;
-  createDataTable(globalTotals, selectedField, selectedLabel);
-}
+function updateEstatisticasGerais(totals) {
+    document.getElementById('totalAlunos').textContent = totals.totalAlunos || 0;
+    document.getElementById('totalTransporte').textContent = totals.porTransporteTipo['Ônibus'] || 0;
+    document.getElementById('totalBolsa').textContent = totals.porBolsaFamilia['sim'] || 0;
+  }
 
 function createDataTable(totals, field, label) {
   const data = Object.entries(totals[field]).map(([key, count]) => ({ key, count }));
