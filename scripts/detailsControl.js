@@ -1,6 +1,6 @@
 // detailsControl.js
 import { APPS_SCRIPT_URL } from './config.js';
-import { checkAuth, initSidebar } from './sessionCheck.js';
+import { showLoader, showMessage } from './sessionCheck.js';
 
 function getQueryParams() {
     const params = {};
@@ -17,7 +17,7 @@ function getQueryParams() {
 async function fetchDashboardData(filterField, filterValue) {
     const token = sessionStorage.getItem('userToken');
     if (!token) {
-        window.location.href = 'index.html';
+        window.location.replace('index.html');
         return;
     }
 
@@ -35,6 +35,7 @@ async function fetchDashboardData(filterField, filterValue) {
     } catch (error) {
         console.error('Erro ao buscar dados:', error);
         showMessage('Erro ao carregar dados do dashboard', true);
+        return null;
     } finally {
         showLoader(false);
     }
@@ -46,51 +47,40 @@ function updateDetails(data, filterField, filterValue) {
         detailTitle.textContent = `Detalhes - ${filterValue}`;
     }
 
-    // Atualizar gráficos
-    createCharts(data);
+    if (data && data.analytics) {
+        createCharts(data.analytics);
+    }
 }
 
-function createCharts(data) {
-    // Gráfico de distribuição por sexo
-    createSexoChart(data);
-    
-    // Aqui você pode adicionar mais gráficos
-    // createIdadeChart(data);
-    // createTurnoChart(data);
-    // etc...
+function createCharts(analytics) {
+    createSexoChart(analytics);
+    // Adicione mais gráficos conforme necessário
 }
 
-function createSexoChart(data) {
+function createSexoChart(analytics) {
     const ctxSexo = document.getElementById('sexoChart');
     if (!ctxSexo) return;
 
-    // Processar dados para o gráfico
     const sexoData = {
         'Masculino': 0,
         'Feminino': 0
     };
 
-    // Se tivermos dados específicos por sexo no analytics
-    if (data.analytics && data.analytics.alunosPorSexoCurso) {
-        Object.entries(data.analytics.alunosPorSexoCurso).forEach(([key, value]) => {
+    if (analytics.alunosPorSexoCurso) {
+        Object.entries(analytics.alunosPorSexoCurso).forEach(([key, value]) => {
             const sexo = key.split('-')[0];
             if (sexo === 'MASCULINO') sexoData['Masculino'] += value;
             if (sexo === 'FEMININO') sexoData['Feminino'] += value;
         });
     }
 
-    // Criar o gráfico
     new Chart(ctxSexo, {
         type: 'pie',
         data: {
             labels: Object.keys(sexoData),
             datasets: [{
                 data: Object.values(sexoData),
-                backgroundColor: [
-                    '#4a90e2',  // Azul para Masculino
-                    '#ff6b6b'   // Rosa para Feminino
-                ],
-                borderWidth: 1
+                backgroundColor: ['#4a90e2', '#ff6b6b']
             }]
         },
         options: {
@@ -109,41 +99,27 @@ function createSexoChart(data) {
     });
 }
 
-function showLoader(show = true) {
-    const loader = document.getElementById('loader');
-    if (loader) {
-        loader.style.display = show ? 'block' : 'none';
-    }
-}
-
-function showMessage(message, isError = false) {
-    console.log(message);
-    // Implementar mensagens visuais se necessário
-}
-
-// Inicialização
-document.addEventListener('DOMContentLoaded', async function() {
-    if (!checkAuth()) return;
-
-    initSidebar();
-
+// Inicialização única
+async function initializeDetails() {
     const params = getQueryParams();
     const filterField = params.filterField || 'instituicao';
     const filterValue = params.filterValue;
 
     if (!filterValue) {
         showMessage('Parâmetros inválidos', true);
-        window.location.href = 'dashboard.html';
+        window.location.replace('dashboard.html');
         return;
     }
 
-    try {
-        const data = await fetchDashboardData(filterField, filterValue);
-        if (data) {
-            updateDetails(data, filterField, filterValue);
-        }
-    } catch (error) {
-        console.error('Erro ao carregar detalhes:', error);
-        showMessage('Erro ao carregar dados', true);
+    const data = await fetchDashboardData(filterField, filterValue);
+    if (data) {
+        updateDetails(data, filterField, filterValue);
     }
-});
+}
+
+// Executar apenas uma vez quando o documento estiver pronto
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeDetails);
+} else {
+    initializeDetails();
+}

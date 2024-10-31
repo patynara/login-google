@@ -1,14 +1,13 @@
 // dashboardControl.js
 import { APPS_SCRIPT_URL } from './config.js';
-import { checkAuth, initSidebar } from './sessionCheck.js';
+import { showLoader, showMessage } from './sessionCheck.js';
 
-let globalData = null;
 let dataTable = null;
 
 async function fetchDashboardData(filterField = null, filterValue = null) {
     const token = sessionStorage.getItem('userToken');
     if (!token) {
-        window.location.href = 'index.html';
+        window.location.replace('index.html');
         return;
     }
 
@@ -29,20 +28,25 @@ async function fetchDashboardData(filterField = null, filterValue = null) {
     } catch (error) {
         console.error('Erro ao buscar dados:', error);
         showMessage('Erro ao carregar dados do dashboard', true);
+        return null;
     } finally {
         showLoader(false);
     }
 }
 
 function initializeDataTable(data) {
-    // Destruir tabela existente se houver
+    if (!data || !Array.isArray(data) || data.length === 0) {
+        console.warn('Sem dados para exibir na tabela');
+        return;
+    }
+
     if (dataTable) {
         dataTable.destroy();
     }
 
-    // Criar estrutura da tabela se não existir
+    const tableContainer = document.getElementById('dataTableContainer');
     if (!document.getElementById('mainTable')) {
-        const tableHtml = `
+        tableContainer.innerHTML = `
             <table id="mainTable" class="display" style="width:100%">
                 <thead>
                     <tr>
@@ -55,10 +59,8 @@ function initializeDataTable(data) {
                 </thead>
             </table>
         `;
-        document.getElementById('dataTableContainer').innerHTML = tableHtml;
     }
 
-    // Processar dados para agrupar por instituição, curso, turma e turno
     const groupedData = data.reduce((acc, curr) => {
         const key = `${curr.instituicao}-${curr.curso}-${curr.turma}-${curr.turno}`;
         if (!acc[key]) {
@@ -74,10 +76,8 @@ function initializeDataTable(data) {
         return acc;
     }, {});
 
-    // Converter dados agrupados para array
     const tableData = Object.values(groupedData);
 
-    // Inicializar DataTable
     dataTable = $('#mainTable').DataTable({
         data: tableData,
         columns: [
@@ -95,16 +95,14 @@ function initializeDataTable(data) {
             'copy', 'csv', 'excel', 'pdf', 'print'
         ],
         initComplete: function() {
-            // Adicionar filtros individuais para cada coluna
             this.api().columns().every(function() {
                 const column = this;
                 const header = $(column.header());
                 const title = header.text();
 
-                // Criar input de pesquisa
                 const input = $('<input type="text" placeholder="Filtrar ' + title + '" />')
                     .appendTo(header)
-                    .on('keyup change', function() {
+                    .on('keyup change clear', function() {
                         if (column.search() !== this.value) {
                             column.search(this.value).draw();
                         }
@@ -113,42 +111,32 @@ function initializeDataTable(data) {
         }
     });
 
-    // Adicionar evento de clique nas linhas
     $('#mainTable tbody').on('click', 'tr', function() {
-        const data = dataTable.row(this).data();
-        if (data) {
-            showDetails(data);
+        const rowData = dataTable.row(this).data();
+        if (rowData) {
+            window.location.href = `details.html?instituicao=${encodeURIComponent(rowData.instituicao)}&curso=${encodeURIComponent(rowData.curso)}&turma=${encodeURIComponent(rowData.turma)}`;
         }
     });
 }
 
 function updateEstatisticasGerais(analytics) {
-    document.getElementById('totalAlunos').textContent = analytics.totalAlunos || 0;
-    document.getElementById('totalTransporte').textContent = 
-        Object.values(analytics.transporteEscola).reduce((a, b) => a + b, 0);
-    document.getElementById('totalBolsa').textContent = 
-        Object.keys(analytics.alunosBolsaFamilia).length;
+    if (!analytics) return;
+
+    const totalAlunos = document.getElementById('totalAlunos');
+    const totalTransporte = document.getElementById('totalTransporte');
+    const totalBolsa = document.getElementById('totalBolsa');
+
+    if (totalAlunos) totalAlunos.textContent = analytics.totalAlunos || 0;
+    if (totalTransporte) totalTransporte.textContent = Object.values(analytics.transporteEscola || {}).reduce((a, b) => a + b, 0);
+    if (totalBolsa) totalBolsa.textContent = Object.keys(analytics.alunosBolsaFamilia || {}).length;
 }
 
-function showDetails(data) {
-    window.location.href = `details.html?instituicao=${encodeURIComponent(data.instituicao)}&curso=${encodeURIComponent(data.curso)}&turma=${encodeURIComponent(data.turma)}`;
-}
-
-function showLoader(show = true) {
-    const loader = document.getElementById('loader');
-    if (loader) {
-        loader.style.display = show ? 'block' : 'none';
-    }
-}
-
-function showMessage(message, isError = false) {
-    console.log(message);
-    // Implementar mensagens visuais se necessário
-}
-
-// Adicionar estilos CSS para a tabela
 function addTableStyles() {
+    const styleId = 'dataTableStyles';
+    if (document.getElementById(styleId)) return;
+
     const style = document.createElement('style');
+    style.id = styleId;
     style.textContent = `
         #mainTable_wrapper {
             margin-top: 20px;
@@ -174,7 +162,7 @@ function addTableStyles() {
             background-color: #f5f5f5;
         }
 
-        .dataTables_wrapper .dt-buttons {
+        .dt-buttons {
             margin-bottom: 10px;
         }
 
@@ -194,21 +182,20 @@ function addTableStyles() {
     document.head.appendChild(style);
 }
 
-// Inicialização
-document.addEventListener('DOMContentLoaded', async function() {
-    if (!checkAuth()) return;
-
-    initSidebar();
+// Inicialização única
+async function initializeDashboard() {
     addTableStyles();
-
-    try {
-        const data = await fetchDashboardData();
-        if (data) {
-            globalData = data;
-            updateEstatisticasGerais(data.analytics);
-            initializeDataTable(data.filteredData);
-        }
-    } catch (error) {
-        console.error('Erro ao inicializar dashboard:', error);
+    
+    const data = await fetchDashboardData();
+    if (data) {
+        updateEstatisticasGerais(data.analytics);
+        initializeDataTable(data.filteredData);
     }
-});
+}
+
+// Executar apenas uma vez quando o documento estiver pronto
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeDashboard);
+} else {
+    initializeDashboard();
+}
