@@ -1,5 +1,6 @@
-// scripts/dashboardControl.js
+// dashboardControl.js
 import { APPS_SCRIPT_URL } from './config.js';
+import { checkAuth, initSidebar } from './sessionCheck.js';
 
 let globalData = null;
 let dataTable = null;
