@@ -1,79 +1,117 @@
-// sessionCheck.js
+// detailsControl.js
+import { APPS_SCRIPT_URL } from './config.js';
+import { checkAuth, initSidebar, showLoader, showMessage } from './sessionCheck.js';
+
 let initialized = false;
 
-export function checkAuth() {
-    const userEmail = sessionStorage.getItem('userEmail');
-    const userToken = sessionStorage.getItem('userToken');
-    const userName = sessionStorage.getItem('userName');
-  
-    if (!userEmail || !userToken || !userName) {
-        window.location.replace('index.html');
-        return false;
+function getQueryParams() {
+    const params = {};
+    const search = window.location.search.substring(1);
+    if (search) {
+        search.split('&').forEach(param => {
+            const [key, value] = param.split('=');
+            params[key] = decodeURIComponent(value);
+        });
     }
-    return true;
+    return params;
 }
 
-export function initSidebar() {
-    if (initialized) return;
+async function fetchDetailsData(instituicao) {
+    const token = sessionStorage.getItem('userToken');
+    if (!token || !instituicao) return null;
+
+    try {
+        showLoader(true);
+        const url = `${APPS_SCRIPT_URL}?action=dashboard&token=${token}&filterField=instituicao&filterValue=${encodeURIComponent(instituicao)}`;
+        const response = await fetch(url);
+        const result = await response.json();
+
+        if (!result.autorizado) {
+            throw new Error(result.message || 'Não autorizado');
+        }
+
+        return result.data;
+    } catch (error) {
+        console.error('Erro ao buscar dados:', error);
+        showMessage('Erro ao carregar detalhes', true);
+        return null;
+    } finally {
+        showLoader(false);
+    }
+}
+
+function updateDetails(data, instituicao) {
+    const titleElement = document.getElementById('detailTitle');
+    if (titleElement) {
+        titleElement.textContent = `Detalhes - ${instituicao}`;
+    }
+
+    if (data?.analytics) {
+        createCharts(data.analytics);
+    }
+}
+
+function createCharts(analytics) {
+    const ctxSexo = document.getElementById('sexoChart');
+    if (!ctxSexo) return;
+
+    const sexoData = {
+        'Masculino': 0,
+        'Feminino': 0
+    };
+
+    if (analytics.alunosPorSexoCurso) {
+        Object.entries(analytics.alunosPorSexoCurso).forEach(([key, value]) => {
+            const sexo = key.split('-')[0];
+            if (sexo === 'MASCULINO') sexoData['Masculino'] += value;
+            if (sexo === 'FEMININO') sexoData['Feminino'] += value;
+        });
+    }
+
+    new Chart(ctxSexo, {
+        type: 'pie',
+        data: {
+            labels: Object.keys(sexoData),
+            datasets: [{
+                data: Object.values(sexoData),
+                backgroundColor: ['#4a90e2', '#ff6b6b']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+async function initializeDetails() {
+    if (initialized || !checkAuth()) return;
     initialized = true;
 
-    const userNameElement = document.getElementById('userName');
-    if (userNameElement) {
-        userNameElement.textContent = sessionStorage.getItem('userName') || '';
-    }
+    initSidebar();
+    const params = getQueryParams();
+    const instituicao = params.instituicao;
 
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', logout);
-    }
-
-    // Responsividade
-    const sidebar = document.getElementById('sidebar');
-    const mainContent = document.getElementById('mainContent');
-    
-    function adjustLayout() {
-        if (window.innerWidth <= 768) {
-            sidebar?.classList.add('collapsed');
-            mainContent?.classList.add('expanded');
-        }
-    }
-
-    window.addEventListener('resize', adjustLayout);
-    adjustLayout();
-}
-
-export function checkIndexAuth() {
-    const userEmail = sessionStorage.getItem('userEmail');
-    const userToken = sessionStorage.getItem('userToken');
-
-    if (userEmail && userToken) {
+    if (!instituicao) {
+        showMessage('Instituição não especificada', true);
         window.location.replace('dashboard.html');
-        return true;
+        return;
     }
-    return false;
-}
 
-export async function logout(e) {
-    if (e) e.preventDefault();
-    sessionStorage.clear();
-    window.location.replace('index.html');
-}
-
-export function showMessage(message, isError = false) {
-    const messageBox = document.getElementById('messageBox');
-    if (messageBox) {
-        messageBox.textContent = message;
-        messageBox.style.display = 'block';
-        messageBox.className = 'message ' + (isError ? 'error' : 'success');
-        setTimeout(() => {
-            messageBox.style.display = 'none';
-        }, 3000);
+    const data = await fetchDetailsData(instituicao);
+    if (data) {
+        updateDetails(data, instituicao);
     }
 }
 
-export function showLoader(show = true) {
-    const loader = document.getElementById('loader');
-    if (loader) {
-        loader.style.display = show ? 'block' : 'none';
-    }
+// Inicialização única
+if (document.readyState === 'complete') {
+    initializeDetails();
+} else {
+    window.addEventListener('load', initializeDetails, { once: true });
 }

@@ -1,8 +1,42 @@
 // detailsControl.js
 import { APPS_SCRIPT_URL } from './config.js';
-import { checkAuth, initSidebar, showLoader, showMessage } from './sessionCheck.js';
 
-let initialized = false;
+// Verificação de autenticação
+function checkAuth() {
+    const userEmail = sessionStorage.getItem('userEmail');
+    const userToken = sessionStorage.getItem('userToken');
+    const userName = sessionStorage.getItem('userName');
+  
+    if (!userEmail || !userToken || !userName) {
+        window.location.replace('index.html');
+        return false;
+    }
+
+    // Configurar nome do usuário
+    const userNameElement = document.getElementById('userName');
+    if (userNameElement) {
+        userNameElement.textContent = userName;
+    }
+
+    // Configurar logout
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            sessionStorage.clear();
+            window.location.replace('index.html');
+        });
+    }
+
+    return true;
+}
+
+// Funções auxiliares
+function showLoader(show = true) {
+    const loader = document.getElementById('loader');
+    if (loader) {
+        loader.style.display = show ? 'block' : 'none';
+    }
+}
 
 function getQueryParams() {
     const params = {};
@@ -16,42 +50,8 @@ function getQueryParams() {
     return params;
 }
 
-async function fetchDetailsData(instituicao) {
-    const token = sessionStorage.getItem('userToken');
-    if (!token || !instituicao) return null;
-
-    try {
-        showLoader(true);
-        const url = `${APPS_SCRIPT_URL}?action=dashboard&token=${token}&filterField=instituicao&filterValue=${encodeURIComponent(instituicao)}`;
-        const response = await fetch(url);
-        const result = await response.json();
-
-        if (!result.autorizado) {
-            throw new Error(result.message || 'Não autorizado');
-        }
-
-        return result.data;
-    } catch (error) {
-        console.error('Erro ao buscar dados:', error);
-        showMessage('Erro ao carregar detalhes', true);
-        return null;
-    } finally {
-        showLoader(false);
-    }
-}
-
-function updateDetails(data, instituicao) {
-    const titleElement = document.getElementById('detailTitle');
-    if (titleElement) {
-        titleElement.textContent = `Detalhes - ${instituicao}`;
-    }
-
-    if (data?.analytics) {
-        createCharts(data.analytics);
-    }
-}
-
-function createCharts(analytics) {
+// Criar gráfico
+function createSexoChart(analytics) {
     const ctxSexo = document.getElementById('sexoChart');
     if (!ctxSexo) return;
 
@@ -89,29 +89,38 @@ function createCharts(analytics) {
     });
 }
 
-async function initializeDetails() {
-    if (initialized || !checkAuth()) return;
-    initialized = true;
-
-    initSidebar();
+// Carregar dados
+async function loadDetailsData() {
     const params = getQueryParams();
     const instituicao = params.instituicao;
 
     if (!instituicao) {
-        showMessage('Instituição não especificada', true);
         window.location.replace('dashboard.html');
         return;
     }
 
-    const data = await fetchDetailsData(instituicao);
-    if (data) {
-        updateDetails(data, instituicao);
+    try {
+        showLoader(true);
+        const token = sessionStorage.getItem('userToken');
+        const response = await fetch(`${APPS_SCRIPT_URL}?action=dashboard&token=${token}&filterField=instituicao&filterValue=${encodeURIComponent(instituicao)}`);
+        const result = await response.json();
+
+        if (!result.autorizado) throw new Error('Não autorizado');
+
+        // Atualizar título
+        document.getElementById('detailTitle').textContent = `Detalhes - ${instituicao}`;
+        
+        // Criar gráfico
+        createSexoChart(result.data.analytics);
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao carregar dados');
+    } finally {
+        showLoader(false);
     }
 }
 
 // Inicialização única
-if (document.readyState === 'complete') {
-    initializeDetails();
-} else {
-    window.addEventListener('load', initializeDetails, { once: true });
+if (checkAuth()) {
+    loadDetailsData();
 }

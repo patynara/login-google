@@ -2,32 +2,22 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>G-EDUC - Detalhes</title>
     <link rel="stylesheet" href="styles/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Scripts -->
-    <script type="module" src="scripts/detailsControl.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="scripts/sessionCheck.js"></script>
-    <script src="scripts/detailsControl.js"></script>
 </head>
 <body>
-    <div class="sidebar" id="sidebar">
+    <aside id="sidebar" class="sidebar">
         <div class="sidebar-header">
             <span class="header-title">G-EDUC</span>
-            <button id="toggleSidebar" class="toggle-btn">
-                <i class="fas fa-bars"></i>
-            </button>
         </div>
-
         <ul class="sidebar-menu">
-            <li><a href="dashboard.html"><i class="fas fa-chart-line"></i> <span>Dashboard</span></a></li>
-            <!-- Outros itens do menu -->
-            <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> <span>Sair</span></a></li>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="#" id="logoutBtn">Sair</a></li>
         </ul>
-    </div>
+    </aside>
 
-    <div id="mainContent" class="main-content">
+    <main id="mainContent" class="main-content">
         <div class="top-bar">
             <div class="user-info">
                 Bem-vindo(a), <span id="userName"></span>
@@ -36,18 +26,20 @@
 
         <div class="dashboard-container">
             <h2 id="detailTitle"></h2>
-            <!-- Aqui você pode colocar gráficos e totalizadores específicos -->
+
             <div class="charts-container">
-                <!-- Exemplo de gráfico -->
                 <div class="chart-card">
                     <h3>Distribuição por Sexo</h3>
                     <canvas id="sexoChart"></canvas>
                 </div>
-                <!-- Adicione outros gráficos conforme necessário -->
             </div>
         </div>
-    </div>
+    </main>
 
-    <div class="loader" id="loader"></div>
+    <div id="loader" class="loader"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="module" src="scripts/detailsControl.js"></script>
 </body>
 </html>
