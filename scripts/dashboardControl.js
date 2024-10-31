@@ -1,117 +1,105 @@
-// detailsControl.js
+// dashboardControl.js
 import { APPS_SCRIPT_URL } from './config.js';
-import { checkAuth, initSidebar, showLoader, showMessage } from './sessionCheck.js';
 
-let initialized = false;
+// Verificar autenticação
+const userToken = sessionStorage.getItem('userToken');
+const userName = sessionStorage.getItem('userName');
 
-function getQueryParams() {
-    const params = {};
-    const search = window.location.search.substring(1);
-    if (search) {
-        search.split('&').forEach(param => {
-            const [key, value] = param.split('=');
-            params[key] = decodeURIComponent(value);
-        });
-    }
-    return params;
-}
-
-async function fetchDetailsData(instituicao) {
-    const token = sessionStorage.getItem('userToken');
-    if (!token || !instituicao) return null;
-
-    try {
-        showLoader(true);
-        const url = `${APPS_SCRIPT_URL}?action=dashboard&token=${token}&filterField=instituicao&filterValue=${encodeURIComponent(instituicao)}`;
-        const response = await fetch(url);
-        const result = await response.json();
-
-        if (!result.autorizado) {
-            throw new Error(result.message || 'Não autorizado');
-        }
-
-        return result.data;
-    } catch (error) {
-        console.error('Erro ao buscar dados:', error);
-        showMessage('Erro ao carregar detalhes', true);
-        return null;
-    } finally {
-        showLoader(false);
-    }
-}
-
-function updateDetails(data, instituicao) {
-    const titleElement = document.getElementById('detailTitle');
-    if (titleElement) {
-        titleElement.textContent = `Detalhes - ${instituicao}`;
-    }
-
-    if (data?.analytics) {
-        createCharts(data.analytics);
-    }
-}
-
-function createCharts(analytics) {
-    const ctxSexo = document.getElementById('sexoChart');
-    if (!ctxSexo) return;
-
-    const sexoData = {
-        'Masculino': 0,
-        'Feminino': 0
+if (!userToken || !userName) {
+    window.location.replace('index.html');
+} else {
+    // Configurar interface básica
+    document.getElementById('userName').textContent = userName;
+    document.getElementById('logoutBtn').onclick = () => {
+        sessionStorage.clear();
+        window.location.replace('index.html');
     };
 
-    if (analytics.alunosPorSexoCurso) {
-        Object.entries(analytics.alunosPorSexoCurso).forEach(([key, value]) => {
-            const sexo = key.split('-')[0];
-            if (sexo === 'MASCULINO') sexoData['Masculino'] += value;
-            if (sexo === 'FEMININO') sexoData['Feminino'] += value;
-        });
-    }
+    // Carregar dados uma única vez
+    (async function() {
+        try {
+            // Mostrar loader
+            document.getElementById('loader').style.display = 'block';
+            
+            // Buscar dados
+            const response = await fetch(`${APPS_SCRIPT_URL}?action=dashboard&token=${userToken}`);
+            const result = await response.json();
 
-    new Chart(ctxSexo, {
-        type: 'pie',
-        data: {
-            labels: Object.keys(sexoData),
-            datasets: [{
-                data: Object.values(sexoData),
-                backgroundColor: ['#4a90e2', '#ff6b6b']
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
+            if (!result.autorizado) throw new Error('Não autorizado');
+
+            const data = result.data;
+
+            // Atualizar estatísticas
+            document.getElementById('totalAlunos').textContent = data.analytics.totalAlunos || 0;
+            document.getElementById('totalTransporte').textContent = 
+                Object.values(data.analytics.transporteEscola || {}).reduce((a, b) => a + b, 0);
+            document.getElementById('totalBolsa').textContent = 
+                Object.keys(data.analytics.alunosBolsaFamilia || {}).length;
+
+            // Criar estrutura da tabela
+            document.getElementById('dataTableContainer').innerHTML = `
+                <table id="mainTable" class="display">
+                    <thead>
+                        <tr>
+                            <th>Instituição</th>
+                            <th>Curso</th>
+                            <th>Turma</th>
+                            <th>Turno</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                </table>
+            `;
+
+            // Preparar dados agrupados
+            const groupedData = data.filteredData.reduce((acc, curr) => {
+                const key = `${curr.instituicao}-${curr.curso}-${curr.turma}-${curr.turno}`;
+                if (!acc[key]) {
+                    acc[key] = {
+                        instituicao: curr.instituicao,
+                        curso: curr.curso,
+                        turma: curr.turma,
+                        turno: curr.turno,
+                        totalAlunos: 0
+                    };
                 }
-            }
+                acc[key].totalAlunos++;
+                return acc;
+            }, {});
+
+            // Inicializar DataTable
+            const dataTable = new DataTable('#mainTable', {
+                data: Object.values(groupedData),
+                columns: [
+                    { data: 'instituicao' },
+                    { data: 'curso' },
+                    { data: 'turma' },
+                    { data: 'turno' },
+                    { data: 'totalAlunos' }
+                ],
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
+                },
+                dom: 'Bfrtip',
+                buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
+            });
+
+            // Adicionar evento de clique
+            document.querySelector('#mainTable tbody').addEventListener('click', (e) => {
+                const row = e.target.closest('tr');
+                if (row) {
+                    const rowData = dataTable.row(row).data();
+                    if (rowData) {
+                        window.location.href = `details.html?instituicao=${encodeURIComponent(rowData.instituicao)}`;
+                    }
+                }
+            });
+
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro ao carregar dados');
+        } finally {
+            document.getElementById('loader').style.display = 'none';
         }
-    });
-}
-
-async function initializeDetails() {
-    if (initialized || !checkAuth()) return;
-    initialized = true;
-
-    initSidebar();
-    const params = getQueryParams();
-    const instituicao = params.instituicao;
-
-    if (!instituicao) {
-        showMessage('Instituição não especificada', true);
-        window.location.replace('dashboard.html');
-        return;
-    }
-
-    const data = await fetchDetailsData(instituicao);
-    if (data) {
-        updateDetails(data, instituicao);
-    }
-}
-
-// Inicialização única
-if (document.readyState === 'complete') {
-    initializeDetails();
-} else {
-    window.addEventListener('load', initializeDetails, { once: true });
+    })();
 }
