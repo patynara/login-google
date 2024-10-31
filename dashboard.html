@@ -1,42 +1,26 @@
+<!-- dashboard.html -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>G-EDUC - Dashboard B</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>G-EDUC - Dashboard</title>
     <link rel="stylesheet" href="styles/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.css">
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
-
-    <!-- Scripts -->
-    <script type="module" src="scripts/dashboardControl.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="scripts/sessionCheck.js"></script>
-    <script src="scripts/dashboardControl.js"></script>
-    <script>// No seu código existente, quando receber os dados
-        fetchDashboardData().then(data => {
-            if (data && data.filteredData) {
-                loadDataTable(data.filteredData);
-            }
-        });</script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
 </head>
 <body>
-    <div class="sidebar" id="sidebar">
+    <aside id="sidebar" class="sidebar">
         <div class="sidebar-header">
-            <span class="header-title">G-EDUC</span>
-            <button id="toggleSidebar" class="toggle-btn">
-                <i class="fas fa-bars"></i>
-            </button>
+            <span class="header-title">GEDUC</span>
         </div>
-
         <ul class="sidebar-menu">
-            <li class="active"><a href="dashboard.html"><i class="fas fa-chart-line"></i> <span>Dashboard</span></a></li>
-            <!-- Outros itens do menu -->
-            <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> <span>Sair</span></a></li>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="#" id="logoutBtn">Sair</a></li>
         </ul>
-    </div>
+    </aside>
 
-    <div id="mainContent" class="main-content">
+    <main id="mainContent" class="main-content">
         <div class="top-bar">
             <div class="user-info">
                 Bem-vindo(a), <span id="userName"></span>
@@ -45,8 +29,7 @@
 
         <div class="dashboard-container">
             <h2>Dashboard Geral</h2>
-        
-            <!-- Adicionar os totalizadores gerais -->
+
             <div class="stats-container">
                 <div class="stat-item">
                     <span id="totalAlunos" class="stat-value">0</span>
@@ -61,30 +44,22 @@
                     <span class="stat-label">Bolsa Família</span>
                 </div>
             </div>
-        
-            <div class="criteria-selector">
-                <label for="criteriaSelect">Selecionar Critério:</label>
-                <select id="criteriaSelect">
-                    <option value="porInstituicao">Instituição</option>
-                    <option value="porIdade">Idade (Faixa)</option>
-                    <option value="porPai">Pai (SIM/NÃO)</option>
-                    <option value="porNaturalidade">Naturalidade</option>
-                    <option value="porSexo">Sexo</option>
-                    <!-- Adicione outros critérios conforme necessário -->
-                </select>
-            </div>
+
             <div id="dataTableContainer"></div>
         </div>
-    </div>
+    </main>
 
-    <div class="loader" id="loader"></div>
+    <div id="loader" class="loader"></div>
+
     <script type="text/javascript" src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+    <script type="module" src="scripts/sessionCheck.js"></script>
+    <script type="module" src="scripts/dashboardControl.js"></script>
 </body>
 </html>
