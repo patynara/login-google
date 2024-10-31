@@ -51,10 +51,16 @@ function createGeneroChart(dados) {
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
         }
     });
 }
+
 
 function createRacaChart(dados) {
     const racaData = Object.entries(dados.porRaca);
@@ -70,7 +76,13 @@ function createRacaChart(dados) {
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    display: true
+                }
+            }
         }
     });
 }
@@ -105,5 +117,38 @@ document.addEventListener('DOMContentLoaded', async function() {
     } catch (error) {
         console.error('Erro ao inicializar dashboard:', error);
         showMessage('Erro ao carregar dashboard', true);
+    }
+});
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.querySelector('.main-content');
+    const toggleBtn = document.getElementById('toggleSidebar');
+
+    function toggleSidebar() {
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+    }
+
+    // Toggle no clique do botão
+    toggleBtn.addEventListener('click', toggleSidebar);
+
+    // Responsividade em telas menores
+    function checkScreenSize() {
+        if (window.innerWidth <= 768) {
+            sidebar.classList.add('collapsed');
+            mainContent.classList.add('expanded');
+        }
+    }
+
+    // Verificar tamanho da tela ao carregar e redimensionar
+    window.addEventListener('resize', checkScreenSize);
+    checkScreenSize();
+
+    // Atualizar nome do usuário com decode URI
+    const userName = sessionStorage.getItem('userName');
+    if (userName) {
+        document.getElementById('userName').textContent = decodeURIComponent(userName);
     }
 });

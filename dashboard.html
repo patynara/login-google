@@ -3,43 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DashboardA</title>
-    <!-- Verificação de sessão deve ser o primeiro script -->
-    <script src="scripts/sessionCheck.js"></script>
-    <style>
-        /* Estilo para ocultar o conteúdo inicialmente */
-        body {
-            visibility: hidden;
-        }
-        .authenticated body {
-            visibility: visible;
-        }
-    </style>
-    <link href="styles/dashboardStyles.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
-    <script src="scripts/dashboardControl.js"></script>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="styles/dashboardStyles.css">
+    <!-- Adicionar FontAwesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <script>
-        // Verificação adicional de segurança
-        if (!sessionStorage.getItem('userEmail')) {
-            window.location.replace('index.html');
-        } else {
-            document.documentElement.classList.add('authenticated');
-        }
-    </script>
-
-<!-- Substituir conteúdo do dashboard.html -->
-<div class="dashboard-container">
-    <div class="top-bar">
-        <div class="user-info">
-            <span id="welcomeMessage">Bem-vindo(a), </span>
-            <span id="userName"></span>
+    <!-- Menu Lateral -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="/api/placeholder/50/50" alt="Logo" class="logo">
+            <button id="toggleSidebar" class="toggle-btn">
+                <i class="fas fa-bars"></i>
+            </button>
         </div>
-        <button id="logoutBtn" class="logout-btn">Sair</button>
-    </div>
+        <ul class="sidebar-menu">
+            <li class="active">
+                <a href="dashboard.html">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="alunos.html">
+                    <i class="fas fa-user-graduate"></i>
+                    <span>Alunos</span>
+                </a>
+            </li>
+            <li>
+                <a href="turmas.html">
+                    <i class="fas fa-users"></i>
+                    <span>Turmas</span>
+                </a>
+            </li>
+            <li>
+                <a href="matriculas.html">
+                    <i class="fas fa-file-signature"></i>
+                    <span>Matrículas</span>
+                </a>
+            </li>
+            <li>
+                <a href="relatorios.html">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Relatórios</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
 
-    <div class="dashboard-grid">
+    <div class="main-content">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="user-info">
+                <span id="welcomeMessage">Bem-vindo(a), </span>
+                <span id="userName"></span>
+            </div>
+            <button id="logoutBtn" class="logout-btn" title="Sair">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
         <div class="card stats-card">
             <h3>Estatísticas Gerais</h3>
             <div class="stats-container">
